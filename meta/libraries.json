@@ -1,0 +1,17 @@
+{
+  "key": "crypt",
+  "name": "Crypt",
+  "authors": [
+    "Matt Borland",
+    "Christopher Kormanyos"
+  ],
+  "maintainers": [
+    "Matt Borland <matt -at- mattborland.com>",
+    "Christopher Kormanyos <e_float -at- yahoo.com>"
+  ],
+  "description": "A module of cryptographic utilities.",
+  "category": [
+    "Math and numerics"
+  ],
+  "cxxstd": "14"
+}
