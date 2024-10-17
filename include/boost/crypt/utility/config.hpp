@@ -58,7 +58,7 @@
 #define BOOST_CRYPT_ASSERT_MSG(expr, msg) assert((expr)&&(msg))
 // ----- Assertions -----
 
-// ----- Has CXX something -----
+// ----- Has something -----
 // C++17
 #if __cplusplus >= 201703L || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L)
 #  if __has_include(<string_view>)
@@ -68,7 +68,14 @@
 #    endif
 #  endif
 #endif
-// ----- Has CXX something -----
+
+#if defined(__has_builtin)
+#define BOOST_CRYPT_HAS_BUILTIN(x) __has_builtin(x)
+#else
+#define BOOST_CRYPT_HAS_BUILTIN(x) false
+#endif
+
+// ----- Has something -----
 
 // ----- Unreachable -----
 #if defined(__GNUC__) || defined(__clang__)
@@ -79,5 +86,17 @@
 #  define BOOST_CRYPT_UNREACHABLE std::abort()
 #endif
 // ----- Unreachable -----
+
+// ----- Unlikely -----
+
+#if BOOST_CRYPT_HAS_BUILTIN(__builtin_expect)
+#  define BOOST_CRYPT_LIKELY(x) __builtin_expect(x, 1)
+#  define BOOST_CRYPT_UNLIKELY(x) __builtin_expect(x, 0)
+#else
+#  define BOOST_CRYPT_LIKELY(x) x
+#  define BOOST_CRYPT_UNLIKELY(x) x
+#endif
+
+// ----- Unlikely -----
 
 #endif //BOOST_CRYPT_DETAIL_CONFIG_HPP

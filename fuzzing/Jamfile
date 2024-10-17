@@ -15,9 +15,7 @@ local all_fuzzers = [ regex.replace-list
 
 for local fuzzer in $(all_fuzzers)
 {
-    # These two fuzzers are the most complex ones. The rest are really
-    # simple, so less time is enough
-    local fuzz_time = 30 ;
+    local fuzz_time = 120 ;
 
     # Create the output corpus directories
     make /tmp/corpus/$(fuzzer) : : common.MkDir ;

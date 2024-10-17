@@ -45,3 +45,4 @@ project : requirements
 
 run quick.cpp ;
 run test_md5.cpp ;
+run test_sha1.cpp ;

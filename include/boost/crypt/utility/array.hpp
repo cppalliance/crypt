@@ -35,10 +35,10 @@ public:
 
     // Iterators
     BOOST_CRYPT_GPU_ENABLED constexpr auto begin() noexcept -> iterator { return elements; }
-    BOOST_CRYPT_GPU_ENABLED constexpr auto begin() const noexcept -> iterator { return elements; }
+    BOOST_CRYPT_GPU_ENABLED constexpr auto begin() const noexcept -> const_iterator { return elements; }
     BOOST_CRYPT_GPU_ENABLED constexpr auto cbegin() const noexcept -> const_iterator { return elements; }
     BOOST_CRYPT_GPU_ENABLED constexpr auto end() noexcept -> iterator { return elements + N; }
-    BOOST_CRYPT_GPU_ENABLED constexpr auto end() const noexcept -> iterator { return elements + N; }
+    BOOST_CRYPT_GPU_ENABLED constexpr auto end() const noexcept -> const_iterator { return elements + N; }
     BOOST_CRYPT_GPU_ENABLED constexpr auto cend() const noexcept -> const_iterator { return elements + N; }
 
     // Sizing
