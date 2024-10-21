@@ -985,6 +985,8 @@ jobs:
         run: |
           cd ../boost-root
           cd libs/crypt/module/
+          mkdir -p gcm.cache
+          chmod -R 777 gcm.cache
           B2_ARGS=("-j" "$BUILD_JOBS" "toolset=${{matrix.toolset}}" "cxxstd=${{matrix.cxxstd}}" "link=static,shared")
           if [ -n "${{matrix.build_variant}}" ]
           then
