@@ -10,7 +10,7 @@
 namespace boost {
 namespace crypt {
 
-enum class hasher_state : boost::crypt::uint8_t
+BOOST_CRYPT_EXPORT enum class hasher_state : boost::crypt::uint8_t
 {
     success,            // no issues
     null,               // nullptr as parameter

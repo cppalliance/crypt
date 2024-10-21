@@ -123,4 +123,12 @@
 
 // ----- Unlikely -----
 
+// ----- Build module -----
+#ifdef BOOST_CRYPT_BUILD_MODULE
+#  define BOOST_CRYPT_EXPORT export
+#else
+#  define BOOST_CRYPT_EXPORT
+#endif
+// ----- Build module -----
+
 #endif //BOOST_CRYPT_DETAIL_CONFIG_HPP
