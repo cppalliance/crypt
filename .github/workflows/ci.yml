@@ -984,6 +984,7 @@ jobs:
         if: matrix.cmake_tests == ''
         run: |
           cd ../boost-root
+          cd libs/crypt/module/
           B2_ARGS=("-j" "$BUILD_JOBS" "toolset=${{matrix.toolset}}" "cxxstd=${{matrix.cxxstd}}" "link=static,shared")
           if [ -n "${{matrix.build_variant}}" ]
           then
@@ -1012,5 +1013,4 @@ jobs:
           then
               B2_ARGS+=("address-model=${{matrix.address_model}}")
           fi
-          B2_ARGS+=("libs/$LIBRARY/module")
-          ./b2 "${B2_ARGS[@]}"
+          ../../../b2 "${B2_ARGS[@]}"
