@@ -88,7 +88,7 @@ run test_nist_cavs_sha1_monte.cpp ;
 run test_nist_cavs_sha1_short_long.cpp ;
 run test_nist_cavs_sha1_hmac.cpp ;
 #run test_nist_cavs_sha1_hmac_drbg.cpp ;
-#run test_nist_cavs_sha1_hash_drbg.cpp ;
+run test_nist_cavs_sha1_hash_drbg.cpp ;
 
 run test_nist_cavs_sha224_monte.cpp ;
 run test_nist_cavs_sha224_short_long.cpp ;
