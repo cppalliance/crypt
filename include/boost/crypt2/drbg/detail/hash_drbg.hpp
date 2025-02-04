@@ -138,11 +138,11 @@ BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto hash_drbg<HasherType, max_hasher_security
     const auto no_of_bytes_to_return {(no_of_bits_to_return + 7U) / 8U};
     const auto len {(no_of_bytes_to_return + outlen_bytes - 1U) / outlen_bytes};
 
-    if (len > 255U) [[unlikely]]
+    if (len > 255U)
     {
         return state::requested_too_many_bits;
     }
-    else if (return_container.size() < no_of_bytes_to_return) [[unlikely]]
+    else if (return_container.size() < no_of_bytes_to_return)
     {
         return state::out_of_memory;
     }
@@ -291,7 +291,7 @@ BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto hash_drbg<HasherType, max_hasher_security
 
     if (seed_status != state::success) [[unlikely]]
     {
-        return seed_status;
+        return seed_status; // LCOV_EXCL_LINE
     }
 
     constexpr compat::array<compat::byte, 1U> offset_array {compat::byte {0x00}};
@@ -299,9 +299,9 @@ BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto hash_drbg<HasherType, max_hasher_security
     auto writeable_constant_span {compat::span<compat::byte, seedlen_bytes>(constant_)};
     seed_status = hash_df(seedlen, writeable_constant_span, offset_span, value_span_);
 
-    if (seed_status != state::success)
+    if (seed_status != state::success) [[unlikely]]
     {
-        return seed_status;
+        return seed_status; // LCOV_EXCL_LINE
     }
 
     initialized_ = true;
@@ -319,31 +319,23 @@ BOOST_CRYPT_GPU_ENABLED auto hash_drbg<HasherType, max_hasher_security, outlen, 
     SizedRange2&& nonce,
     SizedRange3&& personalization) noexcept -> state
 {
-    // First check to see if conversion to spans is even worthwhile
-    if (entropy.size() + nonce.size() < min_entropy)
-    {
-        return state::insufficient_entropy;
-    }
-    else
-    {
-        #if defined(__clang__) && __clang_major__ >= 19
-        #pragma clang diagnostic push
-        #pragma clang diagnostic ignored "-Wunsafe-buffer-usage-in-container"
-        #endif
+    #if defined(__clang__) && __clang_major__ >= 19
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wunsafe-buffer-usage-in-container"
+    #endif
 
-        // Since these are sized ranges we can safely convert them into spans
-        auto entropy_span {compat::make_span(compat::forward<SizedRange1>(entropy))};
-        auto nonce_span {compat::make_span(compat::forward<SizedRange2>(nonce))};
-        auto personalization_span {compat::make_span(compat::forward<SizedRange3>(personalization))};
+    // Since these are sized ranges we can safely convert them into spans
+    auto entropy_span {compat::make_span(compat::forward<SizedRange1>(entropy))};
+    auto nonce_span {compat::make_span(compat::forward<SizedRange2>(nonce))};
+    auto personalization_span {compat::make_span(compat::forward<SizedRange3>(personalization))};
 
-        return init(compat::as_bytes(entropy_span),
-                    compat::as_bytes(nonce_span),
-                    compat::as_bytes(personalization_span));
+    return init(compat::as_bytes(entropy_span),
+                compat::as_bytes(nonce_span),
+                compat::as_bytes(personalization_span));
 
-        #if defined(__clang__) && __clang_major__ >= 19
-        #pragma clang diagnostic pop
-        #endif
-    }
+    #if defined(__clang__) && __clang_major__ >= 19
+    #pragma clang diagnostic pop
+    #endif
 }
 
 template <typename HasherType, compat::size_t max_hasher_security, compat::size_t outlen, bool prediction_resistance>
@@ -428,7 +420,7 @@ BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto hash_drbg<HasherType, max_hasher_security
     compat::span<compat::byte, Extent1> return_data, compat::size_t requested_bits,
     compat::span<const compat::byte, Extent2> additional_data) noexcept -> state
 {
-    if (reseed_counter_ > reseed_interval)
+    if (reseed_counter_ > reseed_interval) [[unlikely]]
     {
         return state::requires_reseed;
     }
@@ -598,9 +590,9 @@ BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto hash_drbg<HasherType, max_hasher_security
                                                         compat::span<const compat::byte, Extent2> entropy,
                                                         compat::span<const compat::byte, Extent3> additional_data) noexcept -> state
 {
-    if (reseed_counter_ > reseed_interval)
+    if (reseed_counter_ > reseed_interval) [[unlikely]]
     {
-        return state::requires_reseed;
+        return state::requires_reseed; // LCOV_EXCL_LINE
     }
     if (!initialized_)
     {
