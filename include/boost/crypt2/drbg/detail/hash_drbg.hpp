@@ -216,36 +216,47 @@ hash_drbg<HasherType, max_hasher_security, outlen, prediction_resistance>::hashg
         return state::out_of_memory;
     }
 
-    const compat::span<const compat::byte, seedlen_bytes> value_span {value_};
+    auto data {value_};
+    const auto data_span {compat::span<compat::byte, seedlen_bytes>(data)};
     compat::size_t offset {};
     HasherType hasher;
     while (offset < requested_number_of_bytes)
     {
         // Step 1: hash the current state of the value array
         hasher.init();
-        [[maybe_unused]] const auto process_bytes_status {hasher.process_bytes(value_span)};
+        [[maybe_unused]] const auto process_bytes_status {hasher.process_bytes(data_span)};
         BOOST_CRYPT_ASSERT(process_bytes_status == state::success);
         [[maybe_unused]] const auto finalize_status {hasher.finalize()};
         BOOST_CRYPT_ASSERT(finalize_status == state::success);
         const auto w_expected {hasher.get_digest()};
         BOOST_CRYPT_ASSERT(w_expected.has_value());
 
-        // Step 2: Write the output of the hash(value_) for return
+        // Step 2: Write the output of the hash(data) for return
         const auto w {w_expected.value()};
-        for (compat::size_t i {}; offset < requested_number_of_bytes && i < w.size(); ++i)
+        if (offset + w.size() <= requested_number_of_bytes)
         {
-            returned_bits[offset++] = w[i];
+            for (const auto byte : w)
+            {
+                returned_bits[offset++] = byte;
+            }
+        }
+        else
+        {
+            for (compat::size_t i {}; offset < requested_number_of_bytes && i < w.size(); ++i)
+            {
+                returned_bits[offset++] = w[i];
+            }
         }
 
-        // Step 3: Increment value_ by 1 modulo 2^seedlen
+        // Step 3: Increment data by 1 modulo 2^seedlen
         compat::uint16_t carry {1};
-        auto value_position {value_.rbegin()};
+        auto data_position {data.rbegin()};
 
-        while (value_position != value_.rend() && carry)
+        while (carry && data_position != data.rend())
         {
-            const auto sum {static_cast<compat::uint16_t>(static_cast<compat::uint16_t>(*value_position) + carry)};
+            const auto sum {static_cast<compat::uint16_t>(static_cast<compat::uint16_t>(*data_position) + carry)};
             carry = static_cast<compat::uint16_t>(sum >> 8U);
-            *value_position-- = static_cast<compat::byte>(sum & 0xFFU);
+            *data_position++ = static_cast<compat::byte>(sum & 0xFFU);
         }
     }
 
@@ -431,53 +442,57 @@ BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto hash_drbg<HasherType, max_hasher_security
         return state::requested_too_many_bits;
     }
 
-    if constexpr (Extent2 != 0U)
+    if constexpr (Extent2 != 0)
     {
-        // Step 2.1 and 2.2
-        // If we are on a different 32 bit or smaller platform and using clang ignore the warning
-        #ifdef __clang__
-        #  pragma clang diagnostic push
-        #  pragma clang diagnostic ignored "-Wtautological-constant-out-of-range-compare"
-        #endif
-
-        #if !defined(__i386__) && !defined(_M_IX86)
-        if (additional_data.size() > max_length)
+        if (!additional_data.empty())
         {
-            return state::input_too_long; // LCOV_EXCL_LINE
-        }
-        #endif // 32-bit platforms
+            // Step 2.1 and 2.2
+            // If we are on a different 32 bit or smaller platform and using clang ignore the warning
+            #ifdef __clang__
+            #  pragma clang diagnostic push
+            #  pragma clang diagnostic ignored "-Wtautological-constant-out-of-range-compare"
+            #endif
 
-        #ifdef __clang__
-        #  pragma clang diagnostic pop
-        #endif
+            #if !defined(__i386__) && !defined(_M_IX86)
+            if (additional_data.size() > max_length)
+            {
+                return state::input_too_long; // LCOV_EXCL_LINE
+            }
+            #endif // 32-bit platforms
 
-        HasherType hasher {};
-        hasher.process_byte(compat::byte{0x02});
-        hasher.process_bytes(value_span_);
-        hasher.process_bytes(additional_data);
-        const auto w_exp {hasher.get_digest()};
+            #ifdef __clang__
+            #  pragma clang diagnostic pop
+            #endif
 
-        if (!w_exp.has_value()) [[unlikely]]
-        {
-            return w_exp.error();
-        }
-        const auto w {w_exp.value()};
+            HasherType hasher {};
+            hasher.process_byte(compat::byte{0x02});
+            hasher.process_bytes(value_span_);
+            hasher.process_bytes(additional_data);
+            hasher.finalize();
+            const auto w_exp {hasher.get_digest()};
 
-        // V = (v + w) mode 2^seedlen
-        auto w_iter {w.crbegin()};
-        const auto w_end {w.crend()};
+            if (!w_exp.has_value()) [[unlikely]]
+            {
+                return w_exp.error();
+            }
+            const auto w {w_exp.value()};
 
-        auto v_iter {value_.rbegin()};
-        const auto v_end {value_.rend()};
+            // V = (v + w) mode 2^seedlen
+            auto w_iter {w.crbegin()};
+            const auto w_end {w.crend()};
 
-        // Since the size of V depends on the size of w we will never have an overflow situation
-        compat::uint16_t carry {};
-        while (w_iter != w_end && v_iter != v_end)
-        {
-            const auto sum {static_cast<compat::uint16_t>(static_cast<compat::uint16_t>(*w_iter) + static_cast<compat::uint16_t>(*v_iter) + carry)};
-            carry = static_cast<compat::uint16_t>(sum >> 8U);
-            *v_iter++ = static_cast<compat::byte>(sum & 0xFFU);
-            ++w_iter;
+            auto v_iter {value_.rbegin()};
+            const auto v_end {value_.rend()};
+
+            // Since the size of V depends on the size of w we will never have an overflow situation
+            compat::uint16_t carry {};
+            while (w_iter != w_end && v_iter != v_end)
+            {
+                const auto sum {static_cast<compat::uint16_t>(static_cast<compat::uint16_t>(*w_iter) + static_cast<compat::uint16_t>(*v_iter) + carry)};
+                carry = static_cast<compat::uint16_t>(sum >> 8U);
+                *v_iter++ = static_cast<compat::byte>(sum & 0xFFU);
+                ++w_iter;
+            }
         }
     }
 
@@ -492,11 +507,9 @@ BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto hash_drbg<HasherType, max_hasher_security
     HasherType hasher {};
     hasher.process_byte(compat::byte{0x03});
     hasher.process_bytes(value_span_);
+    hasher.finalize();
     const auto h_exp {hasher.get_digest()};
-    if (!h_exp.has_value()) [[unlikely]]
-    {
-        return h_exp.error();
-    }
+    BOOST_CRYPT_ASSERT(h_exp.has_value());
     const auto h {h_exp.value()};
 
     // Step 5: v = (v + h + c + reseed counter) mod 2^seedlen
