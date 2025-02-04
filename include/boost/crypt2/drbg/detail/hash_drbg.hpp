@@ -138,13 +138,15 @@ BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto hash_drbg<HasherType, max_hasher_security
     const auto no_of_bytes_to_return {(no_of_bits_to_return + 7U) / 8U};
     const auto len {(no_of_bytes_to_return + outlen_bytes - 1U) / outlen_bytes};
 
-    if (len > 255U)
+    // Neither of these should be possible since this is an internal method, but it's best
+    // to check in case we messed something else up somewhere
+    if (len > 255U) [[unlikely]]
     {
-        return state::requested_too_many_bits;
+        return state::requested_too_many_bits; // LCOV_EXCL_LINE
     }
-    else if (return_container.size() < no_of_bytes_to_return)
+    else if (return_container.size() < no_of_bytes_to_return) [[unlikely]]
     {
-        return state::out_of_memory;
+        return state::out_of_memory; // LCOV_EXCL_LINE
     }
 
     // The hash string concatenates the value of no_of_bits_to_return
@@ -189,8 +191,12 @@ BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto hash_drbg<HasherType, max_hasher_security
             BOOST_CRYPT_ASSERT(status == state::success);
         }
 
-        [[maybe_unused]] const auto finalize_status = hasher.finalize();
-        BOOST_CRYPT_ASSERT(finalize_status == state::success);
+        const auto finalize_status = hasher.finalize();
+        if (finalize_status != state::success) [[unlikely]]
+        {
+            return finalize_status; // LCOV_EXCL_LINE
+        }
+
         const auto return_val {hasher.get_digest()};
 
         BOOST_CRYPT_ASSERT(return_val.has_value());
@@ -364,9 +370,9 @@ BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto hash_drbg<HasherType, max_hasher_security
                               entropy,
                               additional_input)};
 
-    if (seed_status != state::success)
+    if (seed_status != state::success) [[unlikely]]
     {
-        return seed_status;
+        return seed_status; // LCOV_EXCL_LINE
     }
 
     value_ = seed;
@@ -380,9 +386,9 @@ BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto hash_drbg<HasherType, max_hasher_security
                           c_offset_span,
                           value_span_);
 
-    if (seed_status != state::success)
+    if (seed_status != state::success) [[unlikely]]
     {
-        return seed_status;
+        return seed_status; // LCOV_EXCL_LINE
     }
 
     reseed_counter_ = 1U;
@@ -422,7 +428,7 @@ BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto hash_drbg<HasherType, max_hasher_security
 {
     if (reseed_counter_ > reseed_interval) [[unlikely]]
     {
-        return state::requires_reseed;
+        return state::requires_reseed; // LCOV_EXCL_LINE
     }
     if (!initialized_)
     {
@@ -466,7 +472,7 @@ BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto hash_drbg<HasherType, max_hasher_security
 
             if (!w_exp.has_value()) [[unlikely]]
             {
-                return w_exp.error();
+                return w_exp.error(); // LCOV_EXCL_LINE
             }
             const auto w {w_exp.value()};
 
@@ -501,7 +507,7 @@ BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto hash_drbg<HasherType, max_hasher_security
     const auto hashgen_return {hashgen(return_data, requested_bytes)};
     if (hashgen_return != state::success) [[unlikely]]
     {
-        return hashgen_return;
+        return hashgen_return; // LCOV_EXCL_LINE
     }
 
     // Step 4: H = Hash(0x03 || V)
@@ -603,7 +609,7 @@ BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto hash_drbg<HasherType, max_hasher_security
     const auto reseed_return {reseed(entropy, additional_data)};
     if (reseed_return != state::success) [[unlikely]]
     {
-        return reseed_return;
+        return reseed_return; // LCOV_EXCL_LINE
     }
 
     return no_pr_generate_impl(return_data, requested_bits);

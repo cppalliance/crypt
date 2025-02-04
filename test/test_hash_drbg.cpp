@@ -449,6 +449,7 @@ void sha1_error_cases()
     BOOST_TEST(rng.init(entropy, nonce) == boost::crypt::state::success);
     BOOST_TEST(rng.generate(bad_return_container, 1000000U) == boost::crypt::state::requested_too_many_bits);
     BOOST_TEST(rng.generate(bad_return_container, 1000) == boost::crypt::state::out_of_memory);
+    BOOST_TEST(rng.reseed(bad_entropy) == boost::crypt::state::insufficient_entropy);
 
     boost::crypt::sha1_hash_drbg_pr pr_rng;
     BOOST_TEST(pr_rng.generate(bad_return_container, 1, entropy, nonce) == boost::crypt::state::uninitialized);
