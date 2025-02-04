@@ -63,6 +63,8 @@ public:
     template <concepts::sized_range SizedRange>
     BOOST_CRYPT_GPU_ENABLED auto process_bytes(SizedRange&& data) noexcept -> state;
 
+    BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto process_byte(compat::byte data) noexcept -> state;
+
     BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto finalize() noexcept -> state;
 
     [[nodiscard("Digest is the function return value")]] BOOST_CRYPT_GPU_ENABLED_CONSTEXPR
@@ -508,6 +510,13 @@ BOOST_CRYPT_GPU_ENABLED auto sha512_base<digest_size>::process_bytes(SizedRange&
 {
     auto data_span {compat::make_span(compat::forward<SizedRange>(data))};
     return update(compat::as_bytes(data_span));
+}
+
+template <compat::size_t digest_size>
+BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto sha512_base<digest_size>::process_byte(compat::byte data) noexcept -> state
+{
+    const compat::span<const compat::byte, 1> data_span {&data, 1U};
+    return update(data_span);
 }
 
 template <compat::size_t digest_size>

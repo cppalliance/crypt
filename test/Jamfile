@@ -42,6 +42,8 @@ project : requirements
     <toolset>clang:<cxxflags>-Wthread-safety
     <toolset>clang:<cxxflags>-Wunused-lambda-capture
     <toolset>clang:<cxxflags>-Wassign-enum
+    <toolset>clang-19:<cxxflags>-Wunsafe-buffer-usage
+    <toolset>clang-20:<cxxflags>-Wunsafe-buffer-usage
 
     <toolset>msvc:<warnings-as-errors>on
     <toolset>clang:<warnings-as-errors>on
@@ -77,7 +79,7 @@ run test_hmac.cpp ;
 
 #run test_hmac_drbg.cpp ;
 
-#run test_hash_drbg.cpp ;
+run test_hash_drbg.cpp ;
 
 #run test_aes.cpp ;
 
@@ -86,7 +88,7 @@ run test_nist_cavs_sha1_monte.cpp ;
 run test_nist_cavs_sha1_short_long.cpp ;
 run test_nist_cavs_sha1_hmac.cpp ;
 #run test_nist_cavs_sha1_hmac_drbg.cpp ;
-#run test_nist_cavs_sha1_hash_drbg.cpp ;
+run test_nist_cavs_sha1_hash_drbg.cpp ;
 
 run test_nist_cavs_sha224_monte.cpp ;
 run test_nist_cavs_sha224_short_long.cpp ;

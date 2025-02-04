@@ -2197,18 +2197,18 @@ auto test_vectors_drbg_no_reseed(const nist::cavs::test_vector_container_drbg_no
     for (const auto& test_vector : test_vectors)
     {
         DRBGType rng;
-        rng.init(test_vector.initial_entropy.begin(), test_vector.initial_entropy.size(),
-                 test_vector.drbg_nonce.begin(), test_vector.drbg_nonce.size(),
-                 test_vector.personalization_string.begin(), test_vector.personalization_string.size());
+        rng.init(test_vector.initial_entropy,
+                 test_vector.drbg_nonce,
+                 test_vector.personalization_string);
 
-        std::vector<boost::crypt::uint8_t> return_bits {};
+        std::vector<std::uint8_t> return_bits {};
         return_bits.resize(test_vector.result.size());
 
-        rng.generate(return_bits.begin(), return_bits.size() * 8U,
-                     test_vector.additional_input_1.begin(), test_vector.additional_input_1.size());
+        rng.generate(return_bits, return_bits.size() * 8U,
+                     test_vector.additional_input_1);
 
-        rng.generate(return_bits.begin(), return_bits.size() * 8U,
-                     test_vector.additional_input_2.begin(), test_vector.additional_input_2.size());
+        rng.generate(return_bits, return_bits.size() * 8U,
+                     test_vector.additional_input_2);
 
         for (std::size_t i {}; i < return_bits.size(); ++i)
         {
@@ -2241,21 +2241,21 @@ auto test_vectors_drbg_pr_false(const nist::cavs::test_vector_container_drbg_pr_
     for (const auto& test_vector : test_vectors)
     {
         DRBGType rng;
-        rng.init(test_vector.initial_entropy.begin(), test_vector.initial_entropy.size(),
-                 test_vector.drbg_nonce.begin(), test_vector.drbg_nonce.size(),
-                 test_vector.personalization_string.begin(), test_vector.personalization_string.size());
+        rng.init(test_vector.initial_entropy,
+                 test_vector.drbg_nonce,
+                 test_vector.personalization_string);
 
-        rng.reseed(test_vector.reseed_entropy.begin(), test_vector.reseed_entropy.size(),
-                   test_vector.reseed_additional_input.begin(), test_vector.reseed_additional_input.size());
+        rng.reseed(test_vector.reseed_entropy,
+                   test_vector.reseed_additional_input);
 
-        std::vector<boost::crypt::uint8_t> return_bits {};
+        std::vector<std::uint8_t> return_bits {};
         return_bits.resize(test_vector.result.size());
 
-        rng.generate(return_bits.begin(), return_bits.size() * 8U,
-                     test_vector.additional_input_1.begin(), test_vector.additional_input_1.size());
+        rng.generate(return_bits, return_bits.size() * 8U,
+                     test_vector.additional_input_1);
 
-        rng.generate(return_bits.begin(), return_bits.size() * 8U,
-                     test_vector.additional_input_2.begin(), test_vector.additional_input_2.size());
+        rng.generate(return_bits, return_bits.size() * 8U,
+                     test_vector.additional_input_2);
 
         for (std::size_t i {}; i < return_bits.size(); ++i)
         {
@@ -2288,20 +2288,20 @@ auto test_vectors_drbg_pr_true(const nist::cavs::test_vector_container_drbg_pr_t
     for (const auto& test_vector : test_vectors)
     {
         DRBGType rng;
-        rng.init(test_vector.initial_entropy.begin(), test_vector.initial_entropy.size(),
-                 test_vector.drbg_nonce.begin(), test_vector.drbg_nonce.size(),
-                 test_vector.personalization_string.begin(), test_vector.personalization_string.size());
+        rng.init(test_vector.initial_entropy,
+                 test_vector.drbg_nonce,
+                 test_vector.personalization_string);
 
-        std::vector<boost::crypt::uint8_t> return_bits {};
+        std::vector<std::uint8_t> return_bits {};
         return_bits.resize(test_vector.result.size());
 
-        rng.generate(return_bits.begin(), return_bits.size() * 8U,
-                     test_vector.additional_entropy_1.begin(), test_vector.additional_entropy_1.size(),
-                     test_vector.additional_input_1.begin(), test_vector.additional_input_1.size());
+        rng.generate(return_bits, return_bits.size() * 8U,
+                     test_vector.additional_entropy_1,
+                     test_vector.additional_input_1);
 
-        rng.generate(return_bits.begin(), return_bits.size() * 8U,
-                     test_vector.additional_entropy_2.begin(), test_vector.additional_entropy_2.size(),
-                     test_vector.additional_input_2.begin(), test_vector.additional_input_2.size());
+        rng.generate(return_bits, return_bits.size() * 8U,
+                     test_vector.additional_entropy_2,
+                     test_vector.additional_input_2);
 
         for (std::size_t i {}; i < return_bits.size(); ++i)
         {

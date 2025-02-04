@@ -65,6 +65,8 @@ public:
     template <concepts::sized_range SizedRange>
     BOOST_CRYPT_GPU_ENABLED auto process_bytes(SizedRange&& data) noexcept -> state;
 
+    BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto process_byte(const compat::byte data) noexcept -> state;
+
     BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto finalize() noexcept -> state;
 
     // SHA 3 get_digest is idempotent so make as const
@@ -328,6 +330,13 @@ BOOST_CRYPT_GPU_ENABLED auto sha3_base<digest_size, is_xof>::process_bytes(Sized
 {
     auto data_span {compat::make_span(compat::forward<SizedRange>(data))};
     return update(compat::as_bytes(data_span));
+}
+
+template <compat::size_t digest_size, bool is_xof>
+BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto sha3_base<digest_size, is_xof>::process_byte(const compat::byte data) noexcept -> state
+{
+    const compat::span<const compat::byte, 1> data_span {&data, 1U};
+    return update(data_span);
 }
 
 template <compat::size_t digest_size, bool is_xof>

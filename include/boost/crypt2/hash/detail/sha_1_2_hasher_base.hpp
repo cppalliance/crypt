@@ -52,7 +52,9 @@ public:
     BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto process_bytes(compat::span<const compat::byte, Extent> data) noexcept -> state;
 
     template <concepts::sized_range SizedRange>
-    BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto process_bytes(SizedRange&& data) noexcept -> state;
+    BOOST_CRYPT_GPU_ENABLED auto process_bytes(SizedRange&& data) noexcept -> state;
+
+    BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto process_byte(const compat::byte data) noexcept -> state;
 
     BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto finalize() noexcept -> state;
 
@@ -231,7 +233,7 @@ BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto sha_1_2_hasher_base<digest_size, intermed
 
 template <compat::size_t digest_size, compat::size_t intermediate_hash_size>
 template <concepts::sized_range SizedRange>
-BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto sha_1_2_hasher_base<digest_size, intermediate_hash_size>::process_bytes(SizedRange&& data) noexcept -> state
+BOOST_CRYPT_GPU_ENABLED auto sha_1_2_hasher_base<digest_size, intermediate_hash_size>::process_bytes(SizedRange&& data) noexcept -> state
 {
     auto data_span {compat::make_span(compat::forward<SizedRange>(data))};
     return update(compat::as_bytes(data_span));
@@ -242,6 +244,13 @@ template <compat::size_t Extent>
 BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto sha_1_2_hasher_base<digest_size, intermediate_hash_size>::process_bytes(compat::span<const compat::byte, Extent> data) noexcept -> state
 {
     return update(data);
+}
+
+template <compat::size_t digest_size, compat::size_t intermediate_hash_size>
+BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto sha_1_2_hasher_base<digest_size, intermediate_hash_size>::process_byte(const compat::byte data) noexcept -> state
+{
+    const compat::span<const compat::byte, 1> data_span {&data, 1U};
+    return update(data_span);
 }
 
 template <compat::size_t digest_size, compat::size_t intermediate_hash_size>
