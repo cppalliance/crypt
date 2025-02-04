@@ -33,7 +33,7 @@ class hash_drbg
 private:
 
     static_assert(max_hasher_security == 128 || max_hasher_security == 192 || max_hasher_security == 256, "Invalid value for max hasher security");
-    static_assert(outlen == 224 || outlen == 256 || outlen == 384 || outlen == 512, "Invalid outlen value");
+    static_assert(outlen == 160 || outlen == 224 || outlen == 256 || outlen == 384 || outlen == 512, "Invalid outlen value");
 
     static consteval bool valid_combinations()
     {
