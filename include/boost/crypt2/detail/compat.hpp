@@ -202,7 +202,7 @@ struct is_span<const span<T, Extent>> : true_type {};
 template<typename T>
 inline constexpr bool is_span_v = is_span<T>::value;
 
-template <typename R>
+template <sized_range R>
 BOOST_CRYPT_GPU_ENABLED constexpr auto make_span(R&& r)
 {
     if constexpr (is_span_v<remove_cvref_t<R>>)
@@ -215,10 +215,21 @@ BOOST_CRYPT_GPU_ENABLED constexpr auto make_span(R&& r)
     }
     else
     {
+        // Since we know that this is a sized range creating the span should also be safe
+        #if defined(__clang__) && __clang_major__ >= 19
+        #pragma clang diagnostic push
+        #pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
+        #endif
+
         #if BOOST_CRYPT_HAS_CUDA
         return cuda::std::span{cuda::std::forward<R>(r).data(), cuda::std::forward<R>(r).size()};
         #else
         return std::span{std::forward<R>(r).data(), std::forward<R>(r).size()};
+        #endif
+
+        #if defined(__clang__) && __clang_major__ >= 19
+        #pragma clang diagnostic push
+        #pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
         #endif
     }
 }
