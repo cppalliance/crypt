@@ -235,7 +235,10 @@ hash_drbg<HasherType, max_hasher_security, outlen, prediction_resistance>::hashg
         [[maybe_unused]] const auto finalize_status {hasher.finalize()};
         BOOST_CRYPT_ASSERT(finalize_status == state::success);
         const auto w_expected {hasher.get_digest()};
-        BOOST_CRYPT_ASSERT(w_expected.has_value());
+        if (!w_expected.has_value()) [[unlikely]]
+        {
+            return w_expected.error(); // LCOV_EXCL_LINE
+        }
 
         // Step 2: Write the output of the hash(data) for return
         const auto w {w_expected.value()};
