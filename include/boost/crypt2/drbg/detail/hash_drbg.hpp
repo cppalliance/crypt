@@ -98,8 +98,8 @@ public:
 
     template <compat::size_t Extent1 = compat::dynamic_extent,
               compat::size_t Extent2 = compat::dynamic_extent>
-    BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto reseed(compat::span<compat::byte, Extent1> entropy,
-                                                  compat::span<compat::byte, Extent2> additional_input = compat::span<compat::byte, 0>{}) noexcept -> state;
+    BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto reseed(compat::span<const compat::byte, Extent1> entropy,
+                                                  compat::span<const compat::byte, Extent2> additional_input = compat::span<compat::byte, 0>{}) noexcept -> state;
 
     template <concepts::sized_range SizedRange1,
               concepts::sized_range SizedRange2 = compat::array<compat::byte, 0U>>
@@ -350,8 +350,8 @@ template <typename HasherType, compat::size_t max_hasher_security, compat::size_
 template <compat::size_t Extent1,
           compat::size_t Extent2>
 BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto hash_drbg<HasherType, max_hasher_security, outlen, prediction_resistance>::reseed(
-    compat::span<compat::byte, Extent1> entropy,
-    compat::span<compat::byte, Extent2> additional_input) noexcept -> state
+    compat::span<const compat::byte, Extent1> entropy,
+    compat::span<const compat::byte, Extent2> additional_input) noexcept -> state
 {
     constexpr auto min_reseed_entropy {max_hasher_security / 8U};
 
@@ -362,7 +362,7 @@ BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto hash_drbg<HasherType, max_hasher_security
 
     compat::array<compat::byte, seedlen_bytes> seed {};
     compat::span<compat::byte, seedlen_bytes> seed_span {seed};
-    constexpr compat::array<compat::byte, 1U> offset_array { compat::byte{0x01} };
+    constexpr compat::array<const compat::byte, 1U> offset_array { compat::byte{0x01} };
     compat::span<const compat::byte, 1U> offset_array_span {offset_array};
 
     auto seed_status {hash_df(seedlen,
@@ -379,11 +379,12 @@ BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto hash_drbg<HasherType, max_hasher_security
 
     value_ = seed;
 
-    constexpr compat::array<compat::byte, 1U> c_offset_array { compat::byte{0x00} };
+    constexpr compat::array<const compat::byte, 1U> c_offset_array { compat::byte{0x00} };
     compat::span<const compat::byte, 1U> c_offset_span {c_offset_array};
 
+    compat::span<compat::byte, seedlen_bytes> writeable_constant_span {constant_};
     seed_status = hash_df(seedlen,
-                          constant_span_,
+                          writeable_constant_span,
                           c_offset_span,
                           value_span_);
 
