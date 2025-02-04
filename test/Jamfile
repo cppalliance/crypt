@@ -42,6 +42,8 @@ project : requirements
     <toolset>clang:<cxxflags>-Wthread-safety
     <toolset>clang:<cxxflags>-Wunused-lambda-capture
     <toolset>clang:<cxxflags>-Wassign-enum
+    <toolset>clang-19:<cxxflags>-Wunsafe-buffer-usage
+    <toolset>clang-20:<cxxflags>-Wunsafe-buffer-usage
 
     <toolset>msvc:<warnings-as-errors>on
     <toolset>clang:<warnings-as-errors>on

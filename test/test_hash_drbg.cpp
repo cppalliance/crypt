@@ -4,7 +4,18 @@
 
 #define BOOST_CRYPT_DEBUG
 #include <boost/crypt2/drbg/sha1_drbg.hpp>
+
+#if defined(__clang__) && __clang_major__ >= 19
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunsafe-buffer-usage"
+#endif
+
 #include <boost/core/lightweight_test.hpp>
+
+#if defined(__clang__) && __clang_major__ >= 19
+#pragma clang diagnostic pop
+#endif
+
 #include <iostream>
 #include <cstring>
 
@@ -412,6 +423,37 @@ void sha1_no_reseed_additional_input()
     }
 }
 
+void sha1_error_cases()
+{
+    constexpr std::array<std::uint8_t, 16> entropy = {
+            0xc3, 0xef, 0x82, 0xce, 0x24, 0x1f, 0x02, 0xe4, 0x29, 0x8b, 0x11, 0x8c, 0xa4, 0xf1, 0x62, 0x25
+    };
+
+    constexpr std::array<std::uint8_t, 8> nonce = {
+            0x15, 0xe3, 0x2a, 0xbb, 0xae, 0x6b, 0x74, 0x33
+    };
+
+    constexpr std::array<std::uint8_t, 3> bad_entropy = {
+            0xc3, 0xef, 0x82
+    };
+
+    constexpr std::array<std::uint8_t, 8> bad_nonce = {
+            0x15
+    };
+
+    std::array<std::byte, 1> bad_return_container {};
+
+    boost::crypt::sha1_hash_drbg rng;
+    BOOST_TEST(rng.init(bad_entropy, bad_nonce) == boost::crypt::state::insufficient_entropy);
+    BOOST_TEST(rng.generate(bad_return_container, 1) == boost::crypt::state::uninitialized);
+    BOOST_TEST(rng.init(entropy, nonce) == boost::crypt::state::success);
+    BOOST_TEST(rng.generate(bad_return_container, 1000000U) == boost::crypt::state::requested_too_many_bits);
+    BOOST_TEST(rng.generate(bad_return_container, 1000) == boost::crypt::state::out_of_memory);
+
+    boost::crypt::sha1_hash_drbg_pr pr_rng;
+    BOOST_TEST(pr_rng.generate(bad_return_container, 1, entropy, nonce) == boost::crypt::state::uninitialized);
+}
+
 int main()
 {
     sha_1_basic_correctness();
@@ -420,6 +462,7 @@ int main()
     sha1_additional_data();
     sha1_additional_gen_input();
     sha1_no_reseed_additional_input();
+    sha1_error_cases();
 
     return boost::report_errors();
 }
