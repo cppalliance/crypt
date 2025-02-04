@@ -35,6 +35,21 @@ private:
     static_assert(max_hasher_security == 128 || max_hasher_security == 192 || max_hasher_security == 256, "Invalid value for max hasher security");
     static_assert(outlen == 224 || outlen == 256 || outlen == 384 || outlen == 512, "Invalid outlen value");
 
+    static consteval bool valid_combinations()
+    {
+        switch (max_hasher_security)
+        {
+            case 128U:
+                return outlen == 160;
+            case 192U:
+                return outlen == 224;
+            default:
+                return outlen >= 256;
+        }
+    }
+
+    static_assert(valid_combinations(), "Invalid combination of values");
+
     static constexpr compat::size_t outlen_bytes {outlen / 8U};
     static constexpr compat::size_t max_bytes_per_request {65536U};
     static constexpr compat::size_t min_length {max_hasher_security / 8U};
