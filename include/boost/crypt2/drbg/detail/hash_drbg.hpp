@@ -487,12 +487,20 @@ BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto hash_drbg<HasherType, max_hasher_security
 
             // Since the size of V depends on the size of w we will never have an overflow situation
             compat::uint16_t carry {};
-            while (w_iter != w_end && v_iter != v_end)
+            for (; w_iter != w_end; ++w_iter, ++v_iter)
             {
                 const auto sum {static_cast<compat::uint16_t>(static_cast<compat::uint16_t>(*w_iter) + static_cast<compat::uint16_t>(*v_iter) + carry)};
                 carry = static_cast<compat::uint16_t>(sum >> 8U);
+                *v_iter = static_cast<compat::byte>(sum & 0xFFU);
+            }
+
+            // Handle final carry past the end of w
+            // Since we are to do v = (v+w) mod seedlen we don't concern ourselves past v_end
+            while (carry && v_iter != v_end)
+            {
+                const auto sum {static_cast<compat::uint16_t>(static_cast<compat::uint16_t>(*v_iter) + carry)};
+                carry = static_cast<compat::uint16_t>(sum >> 8U);
                 *v_iter++ = static_cast<compat::byte>(sum & 0xFFU);
-                ++w_iter;
             }
         }
     }
