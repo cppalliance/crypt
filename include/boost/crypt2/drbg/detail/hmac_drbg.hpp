@@ -104,6 +104,18 @@ public:
               concepts::sized_range SizedRange2>
     BOOST_CRYPT_GPU_ENABLED auto reseed(SizedRange1&& entropy,
                                         SizedRange2&& additional_data = compat::array<compat::byte, 0>{}) noexcept -> state;
+
+    template <compat::size_t Extent1, compat::size_t Extent2, compat::size_t Extent3>
+    BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto generate(compat::span<compat::byte, Extent1> return_data, compat::size_t requested_bits,
+                                                    compat::span<const compat::byte, Extent2> additional_data_1 = compat::span<const compat::byte, 0U>{},
+                                                    compat::span<const compat::byte, Extent3> additional_data_2 = compat::span<const compat::byte, 0U>{}) noexcept -> state;
+
+    template <concepts::sized_range SizedRange1,
+              concepts::sized_range SizedRange2,
+              concepts::sized_range SizedRange3>
+    BOOST_CRYPT_GPU_ENABLED auto generate(SizedRange1&& return_data, compat::size_t requested_bits,
+                                          SizedRange2&& additional_data_1 = compat::span<compat::byte, 0U>{},
+                                          SizedRange3&& additional_data_2 = compat::span<compat::byte, 0U>{}) noexcept -> state;
 };
 
 template <typename HMACType, compat::size_t max_hasher_security, compat::size_t outlen, bool prediction_resistance>
@@ -293,7 +305,7 @@ BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto hmac_drbg<HMACType, max_hasher_security, 
 
 template <typename HMACType, compat::size_t max_hasher_security, compat::size_t outlen, bool prediction_resistance>
 template <compat::size_t Extent1, compat::size_t Extent2, compat::size_t Extent3>
-BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto hmac_drbg<HMACType, max_hasher_security, outlen, prediction_resistance>::no_pr_generate_impl(
+BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto hmac_drbg<HMACType, max_hasher_security, outlen, prediction_resistance>::pr_generate_impl(
     compat::span<compat::byte, Extent1> return_data, compat::size_t requested_bits,
     compat::span<const compat::byte, Extent2> entropy,
     compat::span<const compat::byte, Extent3> additional_data) noexcept -> state
@@ -423,6 +435,72 @@ BOOST_CRYPT_GPU_ENABLED auto hmac_drbg<HMACType, max_hasher_security, outlen, pr
     #if defined(__clang__) && __clang_major__ >= 19
     #pragma clang diagnostic pop
     #endif
+}
+
+template <typename HMACType, compat::size_t max_hasher_security, compat::size_t outlen, bool prediction_resistance>
+template <compat::size_t Extent1, compat::size_t Extent2, compat::size_t Extent3>
+BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto hmac_drbg<HMACType, max_hasher_security, outlen, prediction_resistance>::generate(
+    compat::span<compat::byte, Extent1> return_data, compat::size_t requested_bits,
+    compat::span<const compat::byte, Extent2> additional_data_1,
+    compat::span<const compat::byte, Extent3> additional_data_2) noexcept -> state
+{
+    if constexpr (prediction_resistance)
+    {
+        return pr_generate_impl(return_data, requested_bits, additional_data_1, additional_data_2);
+    }
+    else
+    {
+        return no_pr_generate_impl(return_data, requested_bits, additional_data_1);
+    }
+}
+
+template <typename HMACType, compat::size_t max_hasher_security, compat::size_t outlen, bool prediction_resistance>
+template <concepts::sized_range SizedRange1,
+          concepts::sized_range SizedRange2,
+          concepts::sized_range SizedRange3>
+BOOST_CRYPT_GPU_ENABLED auto hmac_drbg<HMACType, max_hasher_security, outlen, prediction_resistance>::generate(
+    SizedRange1&& return_data, compat::size_t requested_bits,
+    SizedRange2&& additional_data_1,
+    SizedRange3&& additional_data_2) noexcept -> state
+{
+    if constexpr (prediction_resistance)
+    {
+        #if defined(__clang__) && __clang_major__ >= 19
+        #pragma clang diagnostic push
+        #pragma clang diagnostic ignored "-Wunsafe-buffer-usage-in-container"
+        #endif
+
+        // Since these are sized ranges we can safely convert them into spans
+        auto return_data_span {compat::make_span(compat::forward<SizedRange1>(return_data))};
+        auto additional_data1_span {compat::make_span(compat::forward<SizedRange2>(additional_data_1))};
+        auto additional_data2_span {compat::make_span(compat::forward<SizedRange3>(additional_data_2))};
+
+        return pr_generate_impl(compat::as_writable_bytes(return_data_span), requested_bits,
+                                compat::as_bytes(additional_data1_span),
+                                compat::as_bytes(additional_data2_span));
+
+        #if defined(__clang__) && __clang_major__ >= 19
+        #pragma clang diagnostic pop
+        #endif
+    }
+    else
+    {
+        #if defined(__clang__) && __clang_major__ >= 19
+        #pragma clang diagnostic push
+        #pragma clang diagnostic ignored "-Wunsafe-buffer-usage-in-container"
+        #endif
+
+        // Since these are sized ranges we can safely convert them into spans
+        auto return_data_span {compat::make_span(compat::forward<SizedRange1>(return_data))};
+        auto additional_data1_span {compat::make_span(compat::forward<SizedRange2>(additional_data_1))};
+
+        return no_pr_generate_impl(compat::as_writable_bytes(return_data_span), requested_bits,
+                                   compat::as_bytes(additional_data1_span));
+
+        #if defined(__clang__) && __clang_major__ >= 19
+        #pragma clang diagnostic pop
+        #endif
+    }
 }
 
 } // namespace boost::crypt::drbg_detail
