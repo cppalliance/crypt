@@ -77,7 +77,7 @@ run test_shake256.cpp ;
 
 run test_hmac.cpp ;
 
-#run test_hmac_drbg.cpp ;
+run test_hmac_drbg.cpp ;
 
 run test_hash_drbg.cpp ;
 
