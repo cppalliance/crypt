@@ -63,6 +63,11 @@ class hmac_drbg
     compat::size_t reseed_counter_ {};
     bool initialized_ {};
 
+    template <compat::size_t Extent1, compat::size_t Extent2, compat::size_t Extent3>
+    BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto update(compat::span<const compat::byte, Extent1> provided_data_1,
+                                                  compat::span<const compat::byte, Extent2> provided_data_2,
+                                                  compat::span<const compat::byte, Extent3> provided_data_3) noexcept -> state;
+
 public:
 
     BOOST_CRYPT_GPU_ENABLED_CONSTEXPR hmac_drbg() noexcept = default;
@@ -81,6 +86,88 @@ BOOST_CRYPT_GPU_ENABLED_CONSTEXPR hmac_drbg<HMACType, max_hasher_security, outle
     detail::clear_mem(value_);
     reseed_counter_ = 0U;
     initialized_ = false;
+}
+
+template <typename HMACType, compat::size_t max_hasher_security, compat::size_t outlen, bool prediction_resistance>
+template <compat::size_t Extent1, compat::size_t Extent2, compat::size_t Extent3>
+BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto hmac_drbg<HMACType, max_hasher_security, outlen, prediction_resistance>::update(
+                                            compat::span<const compat::byte, Extent1> provided_data_1,
+                                            compat::span<const compat::byte, Extent2> provided_data_2,
+                                            compat::span<const compat::byte, Extent3> provided_data_3) noexcept -> state
+{
+    const auto provided_data_size {provided_data_1.size() + provided_data_2.size() + provided_data_3.size()};
+
+    // Step 1: V || 0x00 || provided data
+    compat::array<compat::byte, 1U> storage_gap {std::byte{0x00}};
+    compat::span<const compat::byte, 1U> storage_gap_span {storage_gap};
+    HMACType hmac(key_span_);
+    hmac.process_bytes(value_span_);
+    hmac.process_bytes(storage_gap_span);
+    if constexpr (Extent1 != 0)
+    {
+        hmac.process_bytes(provided_data_1);
+    }
+    if constexpr (Extent2 != 0)
+    {
+        hmac.process_bytes(provided_data_2);
+    }
+    if constexpr (Extent3 != 0)
+    {
+        hmac.process_bytes(provided_data_3);
+    }
+
+    hmac.finalize();
+    auto hmac_return {hmac.get_digest()};
+    if (!hmac_return.has_value()) [[unlikely]]
+    {
+        return hmac_return.error(); // LCOV_EXCL_LINE
+    }
+
+    key_ = hmac_return.value();
+
+    if (provided_data_size != 0U)
+    {
+        // Step 2: V || 0x01 || provided data
+        storage_gap[0] = compat::byte{0x01};
+        hmac.init(key_span_);
+        hmac.process_bytes(value_span_);
+        hmac.process_bytes(storage_gap_span);
+        if constexpr (Extent1 != 0)
+        {
+            hmac.process_bytes(provided_data_1);
+        }
+        if constexpr (Extent2 != 0)
+        {
+            hmac.process_bytes(provided_data_2);
+        }
+        if constexpr (Extent3 != 0)
+        {
+            hmac.process_bytes(provided_data_3);
+        }
+
+        hmac.finalize();
+        hmac_return = hmac.get_digest();
+        if (!hmac_return.has_value()) [[unlikely]]
+        {
+            return hmac_return.error(); // LCOV_EXCL_LINE
+        }
+
+        key_ = hmac_return.value();
+
+        // Step 3: Update value
+        hmac.init(key_span_);
+        hmac.process_bytes(value_span_);
+        hmac.finalize();
+        hmac_return = hmac.get_digest();
+        if (!hmac_return.has_value()) [[unlikely]]
+        {
+            return hmac_return.error(); // LCOV_EXCL_LINE
+        }
+
+        value_ = hmac_return.value();
+    }
+
+    return state::success;
 }
 
 template <typename HMACType, compat::size_t max_hasher_security, compat::size_t outlen, bool prediction_resistance>
