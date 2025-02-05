@@ -95,6 +95,10 @@ public:
     BOOST_CRYPT_GPU_ENABLED auto init(SizedRange1&& entropy,
                                       SizedRange2&& nonce = compat::array<compat::byte, 0U>{},
                                       SizedRange3&& personalization = compat::array<compat::byte, 0U>{}) noexcept -> state;
+
+    template <compat::size_t Extent1, compat::size_t Extent2>
+    BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto reseed(compat::span<const compat::byte, Extent1> entropy,
+                                                  compat::span<const compat::byte, Extent2> additional_input = compat::span<const compat::byte, 0>{}) noexcept -> state;
 };
 
 template <typename HMACType, compat::size_t max_hasher_security, compat::size_t outlen, bool prediction_resistance>
@@ -368,6 +372,29 @@ BOOST_CRYPT_GPU_ENABLED auto hmac_drbg<HMACType, max_hasher_security, outlen, pr
     #if defined(__clang__) && __clang_major__ >= 19
     #pragma clang diagnostic pop
     #endif
+}
+
+template <typename HMACType, compat::size_t max_hasher_security, compat::size_t outlen, bool prediction_resistance>
+template <compat::size_t Extent1, compat::size_t Extent2>
+BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto hmac_drbg<HMACType, max_hasher_security, outlen, prediction_resistance>::reseed(
+    compat::span<const compat::byte, Extent1> entropy,
+    compat::span<const compat::byte, Extent2> additional_input) noexcept -> state
+{
+    constexpr auto min_reseed_entropy {max_hasher_security / 8U};
+
+    if (entropy.size() < min_reseed_entropy)
+    {
+        return state::insufficient_entropy;
+    }
+
+    const auto update_return {update(entropy, additional_input)};
+    if (update_return != state::success) [[unlikely]]
+    {
+        return update_return;
+    }
+
+    reseed_counter_ = 1U;
+    return state::success;
 }
 
 } // namespace boost::crypt::drbg_detail
