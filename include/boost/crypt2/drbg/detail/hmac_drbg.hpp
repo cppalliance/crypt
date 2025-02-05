@@ -67,6 +67,11 @@ public:
 
     BOOST_CRYPT_GPU_ENABLED_CONSTEXPR hmac_drbg() noexcept = default;
     BOOST_CRYPT_GPU_ENABLED_CONSTEXPR ~hmac_drbg() noexcept;
+
+    template <compat::size_t Extent1, compat::size_t Extent2, compat::size_t Extent3>
+    BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto init(compat::span<const compat::byte, Extent1> entropy,
+                                                compat::span<const compat::byte, Extent2> nonce = compat::span<compat::byte, 0U> {},
+                                                compat::span<const compat::byte, Extent3> personalization = compat::span<compat::byte, 0U>{}) noexcept -> state;
 };
 
 template <typename HMACType, compat::size_t max_hasher_security, compat::size_t outlen, bool prediction_resistance>
@@ -76,6 +81,42 @@ BOOST_CRYPT_GPU_ENABLED_CONSTEXPR hmac_drbg<HMACType, max_hasher_security, outle
     detail::clear_mem(value_);
     reseed_counter_ = 0U;
     initialized_ = false;
+}
+
+template <typename HMACType, compat::size_t max_hasher_security, compat::size_t outlen, bool prediction_resistance>
+template <compat::size_t Extent1, compat::size_t Extent2, compat::size_t Extent3>
+BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto hmac_drbg<HMACType, max_hasher_security, outlen, prediction_resistance>::init(
+                                            compat::span<const compat::byte, Extent1> entropy,
+                                            compat::span<const compat::byte, Extent2> nonce,
+                                            compat::span<const compat::byte, Extent3> personalization) noexcept -> state
+{
+    // Nonce is to be at least >= 0.5 * max_hasher_security
+    // Unless entropy + nonce >= 1.5 * max_hasher_security
+    if (entropy.size() + nonce.size() < min_entropy)
+    {
+        return state::insufficient_entropy;
+    }
+
+    // Key needs to be set to all 0x00
+    for (auto& byte : key_)
+    {
+        byte = static_cast<compat::byte>(0x00);
+    }
+    // Value needs to be set to all 0x01
+    for (auto& byte : value_)
+    {
+        byte = static_cast<compat::byte>(0x01);
+    }
+
+    const auto update_return {update(entropy, nonce, personalization)};
+    if (update_return != state::success) [[unlikely]]
+    {
+        return update_return; // LCOV_EXCL_LINE
+    }
+
+    reseed_counter_ = 1U;
+    initialized_ = true;
+    return state::success;
 }
 
 } // namespace boost::crypt::drbg_detail
