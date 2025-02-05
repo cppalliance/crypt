@@ -74,6 +74,11 @@ class hmac_drbg
     BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto no_pr_generate_impl(compat::span<compat::byte, Extent1> return_data, compat::size_t requested_bits,
                                                                compat::span<const compat::byte, Extent2> additional_data = compat::span<const compat::byte, 0U>{}) noexcept -> state;
 
+    template <compat::size_t Extent1, compat::size_t Extent2, compat::size_t Extent3>
+    BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto pr_generate_impl(compat::span<compat::byte, Extent1> return_data, compat::size_t requested_bits,
+                                                            compat::span<const compat::byte, Extent2> entropy,
+                                                            compat::span<const compat::byte, Extent3> additional_data = compat::span<const compat::byte, 0U> {}) noexcept -> state;
+
 public:
 
     BOOST_CRYPT_GPU_ENABLED_CONSTEXPR hmac_drbg() noexcept = default;
@@ -275,6 +280,32 @@ BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto hmac_drbg<HMACType, max_hasher_security, 
 
     ++reseed_counter_;
     return state::success;
+}
+
+template <typename HMACType, compat::size_t max_hasher_security, compat::size_t outlen, bool prediction_resistance>
+template <compat::size_t Extent1, compat::size_t Extent2, compat::size_t Extent3>
+BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto hmac_drbg<HMACType, max_hasher_security, outlen, prediction_resistance>::no_pr_generate_impl(
+    compat::span<compat::byte, Extent1> return_data, compat::size_t requested_bits,
+    compat::span<const compat::byte, Extent2> entropy,
+    compat::span<const compat::byte, Extent3> additional_data) noexcept -> state
+{
+    // 9.3.3 Reseed using the entropy and the additional data, then set additional data to NULL
+    if (reseed_counter_ > reseed_interval)
+    {
+        return state::requires_reseed;
+    }
+    if (!initialized_)
+    {
+        return state::uninitialized;
+    }
+
+    const auto reseed_return {reseed(entropy, additional_data)};
+    if (reseed_return != state::success) [[unlikely]]
+    {
+        return reseed_return;
+    }
+
+    return no_pr_generate_impl(return_data, requested_bits);
 }
 
 template <typename HMACType, compat::size_t max_hasher_security, compat::size_t outlen, bool prediction_resistance>
