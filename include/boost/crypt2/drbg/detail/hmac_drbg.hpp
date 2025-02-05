@@ -253,7 +253,7 @@ BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto hmac_drbg<HMACType, max_hasher_security, 
             #if !defined(__i386__) && !defined(_M_IX86)
             if (additional_data.size() > max_length)
             {
-                return state::input_too_long;
+                return state::input_too_long; // LCOV_EXCL_LINE
             }
             #endif // 32-bit platforms
 
@@ -326,7 +326,7 @@ BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto hmac_drbg<HMACType, max_hasher_security, 
     {
         return state::uninitialized;
     }
-    
+
     const auto requested_bytes {requested_bits / 8U};
     if (requested_bytes > max_bytes_per_request)
     {
@@ -336,7 +336,7 @@ BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto hmac_drbg<HMACType, max_hasher_security, 
     const auto reseed_return {reseed(entropy, additional_data)};
     if (reseed_return != state::success) [[unlikely]]
     {
-        return reseed_return;
+        return reseed_return; // LCOV_EXCL_LINE
     }
 
     return no_pr_generate_impl(return_data, requested_bits);
@@ -420,7 +420,7 @@ BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto hmac_drbg<HMACType, max_hasher_security, 
     const auto update_return {update(entropy, additional_input)};
     if (update_return != state::success) [[unlikely]]
     {
-        return update_return;
+        return update_return; // LCOV_EXCL_LINE
     }
 
     reseed_counter_ = 1U;
