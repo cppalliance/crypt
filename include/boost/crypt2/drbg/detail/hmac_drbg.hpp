@@ -174,6 +174,11 @@ BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto hmac_drbg<HMACType, max_hasher_security, 
     }
     value_ = hmac_return.value();
 
+    #ifdef _MSC_VER
+    #pragma warning(push)
+    #pragma warning(disable : 4147) // Conditional expression is constant
+    #endif
+
     if (provided_data_size != 0U)
     {
         // Step 2: V || 0x01 || provided data
@@ -215,6 +220,10 @@ BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto hmac_drbg<HMACType, max_hasher_security, 
 
         value_ = hmac_return.value();
     }
+
+    #ifdef _MSC_VER
+    #pragma warning(pop)
+    #endif
 
     return state::success;
 }
