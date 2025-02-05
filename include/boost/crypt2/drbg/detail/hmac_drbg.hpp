@@ -99,6 +99,11 @@ public:
     template <compat::size_t Extent1, compat::size_t Extent2>
     BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto reseed(compat::span<const compat::byte, Extent1> entropy,
                                                   compat::span<const compat::byte, Extent2> additional_input = compat::span<const compat::byte, 0>{}) noexcept -> state;
+
+    template <concepts::sized_range SizedRange1,
+              concepts::sized_range SizedRange2>
+    BOOST_CRYPT_GPU_ENABLED auto reseed(SizedRange1&& entropy,
+                                        SizedRange2&& additional_data = compat::array<compat::byte, 0>{}) noexcept -> state;
 };
 
 template <typename HMACType, compat::size_t max_hasher_security, compat::size_t outlen, bool prediction_resistance>
@@ -395,6 +400,29 @@ BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto hmac_drbg<HMACType, max_hasher_security, 
 
     reseed_counter_ = 1U;
     return state::success;
+}
+
+template <typename HMACType, compat::size_t max_hasher_security, compat::size_t outlen, bool prediction_resistance>
+template <concepts::sized_range SizedRange1, concepts::sized_range SizedRange2>
+BOOST_CRYPT_GPU_ENABLED auto hmac_drbg<HMACType, max_hasher_security, outlen, prediction_resistance>::reseed(
+                                            SizedRange1&& entropy,
+                                            SizedRange2&& additional_input) noexcept -> state
+{
+    #if defined(__clang__) && __clang_major__ >= 19
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wunsafe-buffer-usage-in-container"
+    #endif
+
+    // Since these are sized ranges we can safely convert them into spans
+    auto entropy_span {compat::make_span(compat::forward<SizedRange1>(entropy))};
+    auto additional_input_span {compat::make_span(compat::forward<SizedRange2>(additional_input))};
+
+    return reseed(compat::as_bytes(entropy_span),
+                  compat::as_bytes(additional_input_span));
+
+    #if defined(__clang__) && __clang_major__ >= 19
+    #pragma clang diagnostic pop
+    #endif
 }
 
 } // namespace boost::crypt::drbg_detail
