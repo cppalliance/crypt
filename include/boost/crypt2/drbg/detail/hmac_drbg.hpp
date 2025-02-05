@@ -227,7 +227,7 @@ BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto hmac_drbg<HMACType, max_hasher_security, 
 {
     if (reseed_counter_ > reseed_interval)
     {
-        return state::requires_reseed;
+        return state::requires_reseed; // LCOV_EXCL_LINE
     }
     if (!initialized_)
     {
@@ -235,7 +235,7 @@ BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto hmac_drbg<HMACType, max_hasher_security, 
     }
 
     const auto requested_bytes {requested_bits / 8U};
-    if (requested_bits > max_bytes_per_request)
+    if (requested_bytes > max_bytes_per_request)
     {
         return state::requested_too_many_bits;
     }
@@ -320,11 +320,17 @@ BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto hmac_drbg<HMACType, max_hasher_security, 
     // 9.3.3 Reseed using the entropy and the additional data, then set additional data to NULL
     if (reseed_counter_ > reseed_interval)
     {
-        return state::requires_reseed;
+        return state::requires_reseed; // LCOV_EXCL_LINE
     }
     if (!initialized_)
     {
         return state::uninitialized;
+    }
+    
+    const auto requested_bytes {requested_bits / 8U};
+    if (requested_bytes > max_bytes_per_request)
+    {
+        return state::requested_too_many_bits;
     }
 
     const auto reseed_return {reseed(entropy, additional_data)};
