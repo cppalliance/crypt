@@ -10,8 +10,6 @@
 #include <boost/crypt2/detail/concepts.hpp>
 #include <boost/crypt2/detail/clear_mem.hpp>
 #include <boost/crypt2/state.hpp>
-#include <libs/crypt/include/boost/crypt/utility/byte.hpp>
-#include <libs/crypt/include/boost/crypt/utility/config.hpp>
 
 namespace boost::crypt::drbg_detail {
 
@@ -65,16 +63,16 @@ class hmac_drbg
     compat::size_t reseed_counter_ {};
     bool initialized_ {};
 
-    template <compat::size_t Extent1, compat::size_t Extent2, compat::size_t Extent3>
+    template <compat::size_t Extent1, compat::size_t Extent2 = 0U, compat::size_t Extent3 = 0U>
     BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto update(compat::span<const compat::byte, Extent1> provided_data_1,
-                                                  compat::span<const compat::byte, Extent2> provided_data_2,
-                                                  compat::span<const compat::byte, Extent3> provided_data_3) noexcept -> state;
+                                                  compat::span<const compat::byte, Extent2> provided_data_2 = compat::span<const compat::byte, 0U>{},
+                                                  compat::span<const compat::byte, Extent3> provided_data_3 = compat::span<const compat::byte, 0U>{}) noexcept -> state;
 
-    template <compat::size_t Extent1, compat::size_t Extent2>
+    template <compat::size_t Extent1, compat::size_t Extent2 = 0U>
     BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto no_pr_generate_impl(compat::span<compat::byte, Extent1> return_data, compat::size_t requested_bits,
                                                                compat::span<const compat::byte, Extent2> additional_data = compat::span<const compat::byte, 0U>{}) noexcept -> state;
 
-    template <compat::size_t Extent1, compat::size_t Extent2, compat::size_t Extent3>
+    template <compat::size_t Extent1, compat::size_t Extent2, compat::size_t Extent3 = 0U>
     BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto pr_generate_impl(compat::span<compat::byte, Extent1> return_data, compat::size_t requested_bits,
                                                             compat::span<const compat::byte, Extent2> entropy,
                                                             compat::span<const compat::byte, Extent3> additional_data = compat::span<const compat::byte, 0U> {}) noexcept -> state;
@@ -84,24 +82,24 @@ public:
     BOOST_CRYPT_GPU_ENABLED_CONSTEXPR hmac_drbg() noexcept = default;
     BOOST_CRYPT_GPU_ENABLED_CONSTEXPR ~hmac_drbg() noexcept;
 
-    template <compat::size_t Extent1, compat::size_t Extent2, compat::size_t Extent3>
+    template <compat::size_t Extent1, compat::size_t Extent2 = 0U, compat::size_t Extent3 = 0U>
     BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto init(compat::span<const compat::byte, Extent1> entropy,
-                                                compat::span<const compat::byte, Extent2> nonce = compat::span<compat::byte, 0U> {},
-                                                compat::span<const compat::byte, Extent3> personalization = compat::span<compat::byte, 0U>{}) noexcept -> state;
+                                                compat::span<const compat::byte, Extent2> nonce = compat::span<const compat::byte, 0U> {},
+                                                compat::span<const compat::byte, Extent3> personalization = compat::span<const compat::byte, 0U>{}) noexcept -> state;
 
     template <concepts::sized_range SizedRange1,
-              concepts::sized_range SizedRange2,
-              concepts::sized_range SizedRange3>
+              concepts::sized_range SizedRange2 = compat::span<const compat::byte, 0U>,
+              concepts::sized_range SizedRange3 = compat::span<const compat::byte, 0U>>
     BOOST_CRYPT_GPU_ENABLED auto init(SizedRange1&& entropy,
-                                      SizedRange2&& nonce = compat::array<compat::byte, 0U>{},
-                                      SizedRange3&& personalization = compat::array<compat::byte, 0U>{}) noexcept -> state;
+                                      SizedRange2&& nonce = compat::span<const compat::byte, 0U>{},
+                                      SizedRange3&& personalization = compat::span<const compat::byte, 0U>{}) noexcept -> state;
 
     template <compat::size_t Extent1, compat::size_t Extent2>
     BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto reseed(compat::span<const compat::byte, Extent1> entropy,
                                                   compat::span<const compat::byte, Extent2> additional_input = compat::span<const compat::byte, 0>{}) noexcept -> state;
 
     template <concepts::sized_range SizedRange1,
-              concepts::sized_range SizedRange2>
+              concepts::sized_range SizedRange2 = compat::array<compat::byte, 0U>>
     BOOST_CRYPT_GPU_ENABLED auto reseed(SizedRange1&& entropy,
                                         SizedRange2&& additional_data = compat::array<compat::byte, 0>{}) noexcept -> state;
 
@@ -111,11 +109,11 @@ public:
                                                     compat::span<const compat::byte, Extent3> additional_data_2 = compat::span<const compat::byte, 0U>{}) noexcept -> state;
 
     template <concepts::sized_range SizedRange1,
-              concepts::sized_range SizedRange2,
-              concepts::sized_range SizedRange3>
+              concepts::sized_range SizedRange2 = compat::span<const compat::byte, 0U>,
+              concepts::sized_range SizedRange3 = compat::span<const compat::byte, 0U>>
     BOOST_CRYPT_GPU_ENABLED auto generate(SizedRange1&& return_data, compat::size_t requested_bits,
-                                          SizedRange2&& additional_data_1 = compat::span<compat::byte, 0U>{},
-                                          SizedRange3&& additional_data_2 = compat::span<compat::byte, 0U>{}) noexcept -> state;
+                                          SizedRange2&& additional_data_1 = compat::span<const compat::byte, 0U>{},
+                                          SizedRange3&& additional_data_2 = compat::span<const compat::byte, 0U>{}) noexcept -> state;
 };
 
 template <typename HMACType, compat::size_t max_hasher_security, compat::size_t outlen, bool prediction_resistance>
@@ -139,7 +137,9 @@ BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto hmac_drbg<HMACType, max_hasher_security, 
     // Step 1: V || 0x00 || provided data
     compat::array<compat::byte, 1U> storage_gap {std::byte{0x00}};
     compat::span<const compat::byte, 1U> storage_gap_span {storage_gap};
-    HMACType hmac(key_span_);
+
+    HMACType hmac;
+    hmac.init(key_span_);
     hmac.process_bytes(value_span_);
     hmac.process_bytes(storage_gap_span);
     if constexpr (Extent1 != 0)
@@ -163,6 +163,16 @@ BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto hmac_drbg<HMACType, max_hasher_security, 
     }
 
     key_ = hmac_return.value();
+
+    hmac.init(key_span_);
+    hmac.process_bytes(value_span_);
+    hmac.finalize();
+    hmac_return = hmac.get_digest();
+    if (!hmac_return.has_value()) [[unlikely]]
+    {
+        return hmac_return.error(); // LCOV_EXCL_LINE
+    }
+    value_ = hmac_return.value();
 
     if (provided_data_size != 0U)
     {
@@ -267,7 +277,7 @@ BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto hmac_drbg<HMACType, max_hasher_security, 
         hmac.process_bytes(value_);
         hmac.finalize();
         const auto hmac_return {hmac.get_digest()};
-        if (!hmac_return.has_value) [[unlikely]]
+        if (!hmac_return.has_value()) [[unlikely]]
         {
             return hmac_return.error(); // LCOV_EXCL_LINE
         }
