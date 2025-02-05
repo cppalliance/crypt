@@ -273,8 +273,8 @@ BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto hmac_drbg<HMACType, max_hasher_security, 
     HMACType hmac;
     while (bytes < requested_bytes)
     {
-        hmac.init(key_);
-        hmac.process_bytes(value_);
+        hmac.init(key_span_);
+        hmac.process_bytes(value_span_);
         hmac.finalize();
         const auto hmac_return {hmac.get_digest()};
         if (!hmac_return.has_value()) [[unlikely]]
@@ -300,13 +300,10 @@ BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto hmac_drbg<HMACType, max_hasher_security, 
         }
     }
 
-    if constexpr (Extent2 != 0)
+    const auto update_return {update(additional_data)};
+    if (update_return != state::success) [[unlikely]]
     {
-        const auto update_return {update(additional_data)};
-        if (update_return != state::success) [[unlikely]]
-        {
-            return update_return; // LCOV_EXCL_LINE
-        }
+        return update_return; // LCOV_EXCL_LINE
     }
 
     ++reseed_counter_;
