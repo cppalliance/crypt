@@ -10,6 +10,8 @@
 #include <boost/crypt2/detail/concepts.hpp>
 #include <boost/crypt2/detail/clear_mem.hpp>
 #include <boost/crypt2/state.hpp>
+#include <libs/crypt/include/boost/crypt/utility/byte.hpp>
+#include <libs/crypt/include/boost/crypt/utility/config.hpp>
 
 namespace boost::crypt::drbg_detail {
 
@@ -67,6 +69,10 @@ class hmac_drbg
     BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto update(compat::span<const compat::byte, Extent1> provided_data_1,
                                                   compat::span<const compat::byte, Extent2> provided_data_2,
                                                   compat::span<const compat::byte, Extent3> provided_data_3) noexcept -> state;
+
+    template <compat::size_t Extent1, compat::size_t Extent2>
+    BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto no_pr_generate_impl(compat::span<compat::byte, Extent1> return_data, compat::size_t requested_bits,
+                                                               compat::span<const compat::byte, Extent2> additional_data = compat::span<const compat::byte, 0U>{}) noexcept -> state;
 
 public:
 
@@ -178,11 +184,105 @@ BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto hmac_drbg<HMACType, max_hasher_security, 
 }
 
 template <typename HMACType, compat::size_t max_hasher_security, compat::size_t outlen, bool prediction_resistance>
+template <compat::size_t Extent1, compat::size_t Extent2>
+BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto hmac_drbg<HMACType, max_hasher_security, outlen, prediction_resistance>::no_pr_generate_impl(
+    compat::span<compat::byte, Extent1> return_data, compat::size_t requested_bits,
+    compat::span<const compat::byte, Extent2> additional_data) noexcept -> state
+{
+    if (reseed_counter_ > reseed_interval)
+    {
+        return state::requires_reseed;
+    }
+    if (!initialized_)
+    {
+        return state::uninitialized;
+    }
+
+    const auto requested_bytes {requested_bits / 8U};
+    if (requested_bits > max_bytes_per_request)
+    {
+        return state::requested_too_many_bits;
+    }
+
+    if constexpr (Extent2 != 0)
+    {
+        if (!additional_data.empty())
+        {
+            // If we are on a different 32 bit or smaller platform and using clang ignore the warning
+            #ifdef __clang__
+            #  pragma clang diagnostic push
+            #  pragma clang diagnostic ignored "-Wtautological-constant-out-of-range-compare"
+            #endif
+
+            #if !defined(__i386__) && !defined(_M_IX86)
+            if (additional_data.size() > max_length)
+            {
+                return state::input_too_long;
+            }
+            #endif // 32-bit platforms
+
+            #ifdef __clang__
+            #  pragma clang diagnostic pop
+            #endif
+
+            const auto update_return {update(additional_data)};
+            if (update_return != state::success) [[unlikely]]
+            {
+                return update_return; // LCOV_EXCL_LINE
+            }
+        }
+    }
+
+    compat::size_t bytes {};
+    HMACType hmac;
+    while (bytes < requested_bytes)
+    {
+        hmac.init(key_);
+        hmac.process_bytes(value_);
+        hmac.finalize();
+        const auto hmac_return {hmac.get_digest()};
+        if (!hmac_return.has_value) [[unlikely]]
+        {
+            return hmac_return.error(); // LCOV_EXCL_LINE
+        }
+
+        value_ = hmac_return.value();
+
+        if (bytes + value_.size() < requested_bytes)
+        {
+            for (const auto val : value_span_)
+            {
+                return_data[bytes++] = val;
+            }
+        }
+        else
+        {
+            for (compat::size_t i {}; bytes < requested_bytes && i < value_.size(); ++i)
+            {
+                return_data[bytes++] = value_span_[i];
+            }
+        }
+    }
+
+    if constexpr (Extent2 != 0)
+    {
+        const auto update_return {update(additional_data)};
+        if (update_return != state::success) [[unlikely]]
+        {
+            return update_return; // LCOV_EXCL_LINE
+        }
+    }
+
+    ++reseed_counter_;
+    return state::success;
+}
+
+template <typename HMACType, compat::size_t max_hasher_security, compat::size_t outlen, bool prediction_resistance>
 template <compat::size_t Extent1, compat::size_t Extent2, compat::size_t Extent3>
 BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto hmac_drbg<HMACType, max_hasher_security, outlen, prediction_resistance>::init(
-                                            compat::span<const compat::byte, Extent1> entropy,
-                                            compat::span<const compat::byte, Extent2> nonce,
-                                            compat::span<const compat::byte, Extent3> personalization) noexcept -> state
+    compat::span<const compat::byte, Extent1> entropy,
+    compat::span<const compat::byte, Extent2> nonce,
+    compat::span<const compat::byte, Extent3> personalization) noexcept -> state
 {
     // Nonce is to be at least >= 0.5 * max_hasher_security
     // Unless entropy + nonce >= 1.5 * max_hasher_security
@@ -215,7 +315,7 @@ BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto hmac_drbg<HMACType, max_hasher_security, 
 
 template <typename HMACType, compat::size_t max_hasher_security, compat::size_t outlen, bool prediction_resistance>
 template <concepts::sized_range SizedRange1, concepts::sized_range SizedRange2, concepts::sized_range SizedRange3>
-BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto hmac_drbg<HMACType, max_hasher_security, outlen, prediction_resistance>::init(
+BOOST_CRYPT_GPU_ENABLED auto hmac_drbg<HMACType, max_hasher_security, outlen, prediction_resistance>::init(
                                             SizedRange1&& entropy,
                                             SizedRange2&& nonce,
                                             SizedRange3&& personalization) noexcept -> state
