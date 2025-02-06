@@ -97,6 +97,8 @@ private:
 
     BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto mix_columns() noexcept -> void;
 
+    BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto gf28_multiply(compat::byte x, compat::byte y) noexcept -> compat::byte;
+
 public:
 
     BOOST_CRYPT_GPU_ENABLED_CONSTEXPR cipher() noexcept = default;
@@ -281,7 +283,16 @@ BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto cipher<Nr>::inv_shift_rows() noexcept -> 
 template <compat::size_t Nr>
 BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto cipher<Nr>::xtimes(compat::byte b) noexcept -> compat::byte
 {
-    return static_cast<compat::byte>((b << 1U) ^ static_cast<compat::byte>(static_cast<unsigned>((b >> 7U) & static_cast<compat::byte>(1U)) * 0x1BU));
+    #if defined(__GNUC__) && __GNUC__ >= 7 && __GNUC__ <= 9
+    #  pragma GCC diagnostic push
+    #  pragma GCC diagnostic ignored "-Wsign-conversion"
+    #endif
+
+    return static_cast<compat::byte>((b << 1U) ^ static_cast<compat::byte>(static_cast<compat::uint8_t>((b >> 7U) & static_cast<compat::byte>(1U)) * 0x1BU));
+
+    #if defined(__GNUC__) && __GNUC__ >= 7 && __GNUC__ <= 9
+    #  pragma GCC diagnostic pop
+    #endif
 }
 
 template <compat::size_t Nr>
@@ -312,6 +323,21 @@ BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto cipher<Nr>::mix_columns() noexcept -> voi
         temp = xtimes(temp);
         column[3] ^= temp ^ all_c ;
     }
+}
+
+// Multiplication of two elements in GF(2^8)
+template <compat::size_t Nr>
+BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto cipher<Nr>::gf28_multiply(compat::byte x, compat::byte y) noexcept -> compat::byte
+{
+    constexpr compat::byte one {1U};
+
+    return static_cast<compat::byte>(
+        static_cast<compat::byte>(static_cast<compat::uint8_t>(y & one) * static_cast<compat::uint8_t>(x)) ^
+        static_cast<compat::byte>(static_cast<compat::uint8_t>(y >> 1U & one) * static_cast<compat::uint8_t>(xtimes(x))) ^
+        static_cast<compat::byte>(static_cast<compat::uint8_t>(y >> 2U & one) * static_cast<compat::uint8_t>(xtimes(xtimes(x)))) ^
+        static_cast<compat::byte>(static_cast<compat::uint8_t>(y >> 3U & one) * static_cast<compat::uint8_t>(xtimes(xtimes(xtimes(x))))) ^
+        static_cast<compat::byte>(static_cast<compat::uint8_t>(y >> 4U & one) * static_cast<compat::uint8_t>(xtimes(xtimes(xtimes(xtimes(x))))))
+    );
 }
 
 template <compat::size_t Nr>
