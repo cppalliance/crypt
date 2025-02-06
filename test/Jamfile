@@ -99,7 +99,7 @@ run test_nist_cavs_sha224_hash_drbg.cpp ;
 run test_nist_cavs_sha256_monte.cpp ;
 run test_nist_cavs_sha256_short_long.cpp ;
 run test_nist_cavs_sha256_hmac.cpp ;
-#run test_nist_cavs_sha256_hmac_drbg.cpp ;
+run test_nist_cavs_sha256_hmac_drbg.cpp ;
 run test_nist_cavs_sha256_hash_drbg.cpp ;
 
 run test_nist_cavs_sha384_monte.cpp ;
