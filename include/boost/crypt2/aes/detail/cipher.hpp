@@ -95,6 +95,8 @@ private:
 
     BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto xtimes(compat::byte b) noexcept -> compat::byte;
 
+    BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto mix_columns() noexcept -> void;
+
 public:
 
     BOOST_CRYPT_GPU_ENABLED_CONSTEXPR cipher() noexcept = default;
@@ -280,6 +282,36 @@ template <compat::size_t Nr>
 BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto cipher<Nr>::xtimes(compat::byte b) noexcept -> compat::byte
 {
     return static_cast<compat::byte>((b << 1U) ^ static_cast<compat::byte>(static_cast<unsigned>((b >> 7U) & static_cast<compat::byte>(1U)) * 0x1BU));
+}
+
+template <compat::size_t Nr>
+BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto cipher<Nr>::mix_columns() noexcept -> void
+{
+    for (auto& column : state)
+    {
+        const auto s0 {column[0]};
+        const auto all_c {column[0] ^ column[1] ^ column[2] ^ column[3]};
+
+        // s'_0,c = ({02} * s_0,c) ^ ({03} * s_1,c) ^ s_2,c ^ s_3,c
+        auto temp  {column[0] ^ column[1]};
+        temp = xtimes(temp);
+        column[0] ^= temp ^ all_c;
+
+        // s'_1,c = s_0,c ^ ({02} * s_1,c) ^ ({03} * s_2,c) ^ s_3,c
+        temp = column[1] ^ column[2];
+        temp = xtimes(temp);
+        column[1] ^= temp ^ all_c;
+
+        // s`_2,c = s_0,c ^ s_1,c ^ ({02} * s_2,c) ^ ({03} * s_3,c)
+        temp = column[2] ^ column[3];
+        temp = xtimes(temp);
+        column[2] ^= temp ^ all_c;
+
+        // s`_3,c = ({03} * s_0,c) ^ s_1,c ^ s_2,c ^ ({02} * s_3,c)
+        temp = column[3] ^ s0;
+        temp = xtimes(temp);
+        column[3] ^= temp ^ all_c ;
+    }
 }
 
 template <compat::size_t Nr>
