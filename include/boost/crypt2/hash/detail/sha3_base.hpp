@@ -37,11 +37,11 @@ private:
 
     BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto process_message_block() noexcept -> void;
 
-    template <compat::size_t Extent = compat::dynamic_extent>
+    template <compat::size_t Extent>
     [[nodiscard]] BOOST_CRYPT_GPU_ENABLED_CONSTEXPR
     auto update(compat::span<const compat::byte, Extent> data) noexcept -> state;
 
-    template <compat::size_t Extent = compat::dynamic_extent>
+    template <compat::size_t Extent>
     BOOST_CRYPT_GPU_ENABLED_CONSTEXPR
     auto xof_digest_impl(compat::span<compat::byte, Extent> data, compat::size_t amount) noexcept -> void;
 
@@ -59,7 +59,7 @@ public:
 
     BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto init() noexcept -> void;
 
-    template <compat::size_t Extent = compat::dynamic_extent>
+    template <compat::size_t Extent>
     BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto process_bytes(compat::span<const compat::byte, Extent> data) noexcept -> state;
 
     template <concepts::sized_range SizedRange>
@@ -74,7 +74,7 @@ public:
     [[nodiscard("Digest is the function return value")]] BOOST_CRYPT_GPU_ENABLED_CONSTEXPR
     compat::enable_if_t<Const, compat::expected<return_type, state>> get_digest() const noexcept;
 
-    template <bool Const = !is_xof, compat::size_t Extent = compat::dynamic_extent>
+    template <bool Const = !is_xof, compat::size_t Extent>
     [[nodiscard]] BOOST_CRYPT_GPU_ENABLED_CONSTEXPR
     compat::enable_if_t<Const, state> get_digest(compat::span<compat::byte, Extent> data) const noexcept;
 
@@ -87,7 +87,7 @@ public:
     [[nodiscard("Digest is the function return value")]] BOOST_CRYPT_GPU_ENABLED_CONSTEXPR
     compat::enable_if_t<Const, compat::expected<return_type, state>> get_digest() noexcept;
 
-    template <bool Const = is_xof, compat::size_t Extent = compat::dynamic_extent>
+    template <bool Const = is_xof, compat::size_t Extent>
     [[nodiscard]] BOOST_CRYPT_GPU_ENABLED_CONSTEXPR
     compat::enable_if_t<Const, state> get_digest(compat::span<compat::byte, Extent> data) noexcept;
 
@@ -95,7 +95,7 @@ public:
     [[nodiscard]] BOOST_CRYPT_GPU_ENABLED
     compat::enable_if_t<Const, state> get_digest(Range&& data) noexcept;
 
-    template <bool Const = is_xof, compat::size_t Extent = compat::dynamic_extent>
+    template <bool Const = is_xof, compat::size_t Extent>
     [[nodiscard]] BOOST_CRYPT_GPU_ENABLED_CONSTEXPR
     compat::enable_if_t<Const, state> get_digest(compat::span<compat::byte, Extent> data, std::size_t amount) noexcept;
 
