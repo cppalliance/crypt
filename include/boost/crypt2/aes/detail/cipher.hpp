@@ -89,6 +89,10 @@ private:
 
     BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto inv_sub_bytes() noexcept -> void;
 
+    BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto shift_rows() noexcept -> void;
+
+    BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto inv_shift_rows() noexcept -> void;
+
 public:
 
     BOOST_CRYPT_GPU_ENABLED_CONSTEXPR cipher() noexcept = default;
@@ -207,6 +211,64 @@ BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto cipher<Nr>::inv_sub_bytes() noexcept -> v
             val = rsbox[static_cast<compat::size_t>(val)];
         }
     }
+}
+
+// The transformation of the state in which the last three rows are
+// cyclically shifted by different offsets.
+template <compat::size_t Nr>
+BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto cipher<Nr>::shift_rows() noexcept -> void
+{
+    compat::byte temp {};
+
+    temp        = state[0][1];
+    state[0][1] = state[1][1];
+    state[1][1] = state[2][1];
+    state[2][1] = state[3][1];
+    state[3][1] = temp;
+
+    temp        = state[0][2];
+    state[0][2] = state[2][2];
+    state[2][2] = temp;
+
+    temp        = state[1][2];
+    state[1][2] = state[3][2];
+    state[3][2] = temp;
+
+    temp        = state[0][3];
+    state[0][3] = state[3][3];
+    state[3][3] = state[2][3];
+    state[2][3] = state[1][3];
+    state[1][3] = temp;
+}
+
+// inv_shift_rows in the inverse of shift rows (above).
+// In particular, the bytes in the last three rows of the state are shifted cyclically
+//
+// s'_r,c = s_r,(c-r) mod 4 for 0 <= r < 4 and 0 <= c < 4
+template <compat::size_t Nr>
+BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto cipher<Nr>::inv_shift_rows() noexcept -> void
+{
+    compat::byte temp {};
+
+    temp        = state[3][1];
+    state[3][1] = state[2][1];
+    state[2][1] = state[1][1];
+    state[1][1] = state[0][1];
+    state[0][1] = temp;
+
+    temp        = state[0][2];
+    state[0][2] = state[2][2];
+    state[2][2] = temp;
+
+    temp        = state[1][2];
+    state[1][2] = state[3][2];
+    state[3][2] = temp;
+
+    temp        = state[0][3];
+    state[0][3] = state[1][3];
+    state[1][3] = state[2][3];
+    state[2][3] = state[3][3];
+    state[3][3] = temp;
 }
 
 template <compat::size_t Nr>
