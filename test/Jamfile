@@ -87,43 +87,43 @@ run test_hash_drbg.cpp ;
 run test_nist_cavs_sha1_monte.cpp ;
 run test_nist_cavs_sha1_short_long.cpp ;
 run test_nist_cavs_sha1_hmac.cpp ;
-#run test_nist_cavs_sha1_hmac_drbg.cpp ;
+run test_nist_cavs_sha1_hmac_drbg.cpp ;
 run test_nist_cavs_sha1_hash_drbg.cpp ;
 
 run test_nist_cavs_sha224_monte.cpp ;
 run test_nist_cavs_sha224_short_long.cpp ;
 run test_nist_cavs_sha224_hmac.cpp ;
-#run test_nist_cavs_sha224_hmac_drbg.cpp ;
+run test_nist_cavs_sha224_hmac_drbg.cpp ;
 run test_nist_cavs_sha224_hash_drbg.cpp ;
 
 run test_nist_cavs_sha256_monte.cpp ;
 run test_nist_cavs_sha256_short_long.cpp ;
 run test_nist_cavs_sha256_hmac.cpp ;
-#run test_nist_cavs_sha256_hmac_drbg.cpp ;
+run test_nist_cavs_sha256_hmac_drbg.cpp ;
 run test_nist_cavs_sha256_hash_drbg.cpp ;
 
 run test_nist_cavs_sha384_monte.cpp ;
 run test_nist_cavs_sha384_short_long.cpp ;
 run test_nist_cavs_sha384_hmac.cpp ;
-#run test_nist_cavs_sha384_hmac_drbg.cpp ;
+run test_nist_cavs_sha384_hmac_drbg.cpp ;
 run test_nist_cavs_sha384_hash_drbg.cpp ;
 
 run test_nist_cavs_sha512_monte.cpp ;
 run test_nist_cavs_sha512_short_long.cpp ;
 run test_nist_cavs_sha512_hmac.cpp ;
-#run test_nist_cavs_sha512_hmac_drbg.cpp ;
+run test_nist_cavs_sha512_hmac_drbg.cpp ;
 run test_nist_cavs_sha512_hash_drbg.cpp ;
 
 run test_nist_cavs_sha512_224_monte.cpp ;
 run test_nist_cavs_sha512_224_short_long.cpp ;
 run test_nist_cavs_sha512_224_hmac.cpp ;
-#run test_nist_cavs_sha512_224_hmac_drbg.cpp ;
+run test_nist_cavs_sha512_224_hmac_drbg.cpp ;
 run test_nist_cavs_sha512_224_hash_drbg.cpp ;
 
 run test_nist_cavs_sha512_256_monte.cpp ;
 run test_nist_cavs_sha512_256_short_long.cpp ;
 run test_nist_cavs_sha512_256_hmac.cpp ;
-#run test_nist_cavs_sha512_256_hmac_drbg.cpp ;
+run test_nist_cavs_sha512_256_hmac_drbg.cpp ;
 run test_nist_cavs_sha512_256_hash_drbg.cpp ;
 
 run test_nist_cavs_sha3_512_monte.cpp ;
