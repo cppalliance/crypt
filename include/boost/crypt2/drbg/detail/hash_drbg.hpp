@@ -108,7 +108,7 @@ public:
                                                 compat::span<const compat::byte, Extent3> personalization = compat::span<const compat::byte, 0>{}) noexcept -> state;
 
     template <concepts::sized_range SizedRange1,
-              concepts::sized_range SizedRange2,
+              concepts::sized_range SizedRange2 = compat::span<const compat::byte, 0U>,
               concepts::sized_range SizedRange3 = compat::span<const compat::byte, 0U>>
     BOOST_CRYPT_GPU_ENABLED auto init(SizedRange1&& entropy,
                                       SizedRange2&& nonce = compat::span<const compat::byte, 0U> {},
