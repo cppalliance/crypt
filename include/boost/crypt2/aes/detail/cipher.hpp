@@ -85,6 +85,10 @@ private:
     template <compat::size_t Extent>
     BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto key_expansion(compat::span<const compat::byte, Extent> key) noexcept -> void;
 
+    BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto sub_bytes() noexcept -> void;
+
+    BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto inv_sub_bytes() noexcept -> void;
+
 public:
 
     BOOST_CRYPT_GPU_ENABLED_CONSTEXPR cipher() noexcept = default;
@@ -175,6 +179,33 @@ BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto cipher<Nr>::key_expansion(compat::span<co
         round_key[j + 1U] = round_key[l + 1U] ^ temp[1];
         round_key[j + 2U] = round_key[l + 2U] ^ temp[2];
         round_key[j + 3U] = round_key[l + 3U] ^ temp[3];
+    }
+}
+
+// The transformation of the state that applies the S-box independently
+// to each byte of the state.
+template <compat::size_t Nr>
+BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto cipher<Nr>::sub_bytes() noexcept -> void
+{
+    for (auto& line : state)
+    {
+        for (auto& val : line)
+        {
+            val = sbox[static_cast<compat::size_t>(val)];
+        }
+    }
+}
+
+// The inverse of sub_bytes (above), in which rsbox is applied to each byte
+template <compat::size_t Nr>
+BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto cipher<Nr>::inv_sub_bytes() noexcept -> void
+{
+    for (auto& line : state)
+    {
+        for (auto& val : line)
+        {
+            val = rsbox[static_cast<compat::size_t>(val)];
+        }
     }
 }
 
