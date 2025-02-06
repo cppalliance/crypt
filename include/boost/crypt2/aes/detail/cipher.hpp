@@ -110,11 +110,11 @@ public:
 
     BOOST_CRYPT_GPU_ENABLED_CONSTEXPR ~cipher() noexcept;
 
-    BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto init(compat::span<const compat::byte, 4 * Nk> key) noexcept -> void;
+    BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto init(compat::span<const compat::byte, 4 * Nk> key) noexcept -> crypt::state;
 
-    BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto block_cipher(compat::span<compat::byte, 16U> buffer) noexcept -> void;
+    BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto block_cipher(compat::span<compat::byte, 16U> buffer) noexcept -> crypt::state;
 
-    BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto inverse_block_cipher(compat::span<compat::byte, 16U> buffer) noexcept -> void;
+    BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto inverse_block_cipher(compat::span<compat::byte, 16U> buffer) noexcept -> crypt::state;
 };
 
 template <compat::size_t Nr>
@@ -291,16 +291,7 @@ BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto cipher<Nr>::inv_shift_rows() noexcept -> 
 template <compat::size_t Nr>
 BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto cipher<Nr>::xtimes(compat::byte b) noexcept -> compat::byte
 {
-    #if defined(__GNUC__) && __GNUC__ >= 7 && __GNUC__ <= 9
-    #  pragma GCC diagnostic push
-    #  pragma GCC diagnostic ignored "-Wsign-conversion"
-    #endif
-
     return static_cast<compat::byte>((b << 1U) ^ static_cast<compat::byte>(static_cast<compat::uint8_t>((b >> 7U) & static_cast<compat::byte>(1U)) * 0x1BU));
-
-    #if defined(__GNUC__) && __GNUC__ >= 7 && __GNUC__ <= 9
-    #  pragma GCC diagnostic pop
-    #endif
 }
 
 template <compat::size_t Nr>
@@ -396,15 +387,21 @@ constexpr auto cipher<Nr>::add_round_key(compat::size_t round) noexcept -> void
 }
 
 template <compat::size_t Nr>
-BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto cipher<Nr>::init(compat::span<const compat::byte, 4 * Nk> key) noexcept -> void
+BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto cipher<Nr>::init(compat::span<const compat::byte, 4 * Nk> key) noexcept -> crypt::state
 {
     key_expansion(key);
     initialized = true;
+    return state::success;
 }
 
 template <compat::size_t Nr>
-BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto cipher<Nr>::block_cipher(compat::span<compat::byte, 16U> buffer) noexcept -> void
+BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto cipher<Nr>::block_cipher(compat::span<compat::byte, 16U> buffer) noexcept -> crypt::state
 {
+    if (!initialized)
+    {
+        return state::uninitialized;
+    }
+
     // Write the buffer to state and then perform operations
     auto buffer_iter {buffer.begin()};
     for (auto& row : state)
@@ -444,11 +441,18 @@ BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto cipher<Nr>::block_cipher(compat::span<com
         }
     }
     BOOST_CRYPT_ASSERT(buffer_iter == buffer.end());
+
+    return state::success;
 }
 
 template <compat::size_t Nr>
-constexpr auto cipher<Nr>::inverse_block_cipher(compat::span<compat::byte, 16U> buffer) noexcept -> void
+constexpr auto cipher<Nr>::inverse_block_cipher(compat::span<compat::byte, 16U> buffer) noexcept -> crypt::state
 {
+    if (!initialized)
+    {
+        return state::uninitialized;
+    }
+
     // Write the buffer to state and then perform operations
     auto buffer_iter {buffer.begin()};
     for (auto& row : state)
@@ -487,6 +491,8 @@ constexpr auto cipher<Nr>::inverse_block_cipher(compat::span<compat::byte, 16U> 
         }
     }
     BOOST_CRYPT_ASSERT(buffer_iter == buffer.end());
+
+    return state::success;
 }
 
 } // namespace boost::crypt::aes_detail
