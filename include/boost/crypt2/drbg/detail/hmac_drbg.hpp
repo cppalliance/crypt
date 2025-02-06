@@ -94,7 +94,7 @@ public:
                                       SizedRange2&& nonce = compat::span<const compat::byte, 0U>{},
                                       SizedRange3&& personalization = compat::span<const compat::byte, 0U>{}) noexcept -> state;
 
-    template <compat::size_t Extent1, compat::size_t Extent2>
+    template <compat::size_t Extent1, compat::size_t Extent2 = 0U>
     BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto reseed(compat::span<const compat::byte, Extent1> entropy,
                                                   compat::span<const compat::byte, Extent2> additional_input = compat::span<const compat::byte, 0>{}) noexcept -> state;
 
@@ -103,7 +103,7 @@ public:
     BOOST_CRYPT_GPU_ENABLED auto reseed(SizedRange1&& entropy,
                                         SizedRange2&& additional_data = compat::span<const compat::byte, 0U>{}) noexcept -> state;
 
-    template <compat::size_t Extent1, compat::size_t Extent2, compat::size_t Extent3>
+    template <compat::size_t Extent1, compat::size_t Extent2 = 0U, compat::size_t Extent3 = 0U>
     BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto generate(compat::span<compat::byte, Extent1> return_data, compat::size_t requested_bits,
                                                     compat::span<const compat::byte, Extent2> additional_data_1 = compat::span<const compat::byte, 0U>{},
                                                     compat::span<const compat::byte, Extent3> additional_data_2 = compat::span<const compat::byte, 0U>{}) noexcept -> state;
