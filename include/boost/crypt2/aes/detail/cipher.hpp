@@ -101,6 +101,8 @@ private:
 
     BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto gf28_multiply(compat::byte x, compat::byte y) noexcept -> compat::byte;
 
+    BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto add_round_key(compat::size_t round) noexcept -> void;
+
 public:
 
     BOOST_CRYPT_GPU_ENABLED_CONSTEXPR cipher() noexcept = default;
@@ -370,6 +372,23 @@ BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto cipher<Nr>::gf28_multiply(compat::byte x,
         static_cast<compat::byte>(static_cast<compat::uint8_t>(y >> 3U & one) * static_cast<compat::uint8_t>(xtimes(xtimes(xtimes(x))))) ^
         static_cast<compat::byte>(static_cast<compat::uint8_t>(y >> 4U & one) * static_cast<compat::uint8_t>(xtimes(xtimes(xtimes(xtimes(x))))))
     );
+}
+
+// The transformation of the state in which a round key is combined
+// with the state.
+//
+// Add round_key is its own inverse so there is no separate inverse function
+template <compat::size_t Nr>
+constexpr auto cipher<Nr>::add_round_key(compat::size_t round) noexcept -> void
+{
+    for (compat::size_t i {}; i < Nb; ++i)
+    {
+        for (compat::size_t j {}; j < Nb; ++j)
+        {
+            const auto round_key_value {round_key[(round * Nb * 4U) + (i * Nb) + j]};
+            state[i][j] ^= round_key_value;
+        }
+    }
 }
 
 template <compat::size_t Nr>
