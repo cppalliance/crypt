@@ -36,14 +36,14 @@ private:
     bool computed_ {false};
     bool corrupted_ {false};
 
-    template <compat::size_t Extent = compat::dynamic_extent>
+    template <compat::size_t Extent>
     BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto init_impl(compat::span<const compat::byte, Extent> data) noexcept -> state;
 
 public:
 
     BOOST_CRYPT_GPU_ENABLED_CONSTEXPR hmac() noexcept = default;
 
-    template <compat::size_t Extent = compat::dynamic_extent>
+    template <compat::size_t Extent>
     explicit BOOST_CRYPT_GPU_ENABLED_CONSTEXPR hmac(const compat::span<const compat::byte, Extent> key) noexcept { init(key); }
     
     BOOST_CRYPT_GPU_ENABLED_CONSTEXPR ~hmac() noexcept;
@@ -51,13 +51,13 @@ public:
     BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto init_from_keys(const key_type& inner_key,
                                                           const key_type& outer_key) noexcept -> state;
 
-    template <compat::size_t Extent = compat::dynamic_extent>
+    template <compat::size_t Extent>
     BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto init(compat::span<const compat::byte, Extent> data) noexcept -> state;
 
     template <concepts::sized_range SizedRange>
     BOOST_CRYPT_GPU_ENABLED auto init(SizedRange&& data) noexcept -> state;
 
-    template <compat::size_t Extent = compat::dynamic_extent>
+    template <compat::size_t Extent>
     BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto process_bytes(compat::span<const compat::byte, Extent> data) noexcept -> state;
 
     template <concepts::sized_range SizedRange>
@@ -67,7 +67,7 @@ public:
 
     [[nodiscard]] BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto get_digest() const noexcept -> compat::expected<return_type, state>;
 
-    template <compat::size_t Extent = compat::dynamic_extent>
+    template <compat::size_t Extent>
     [[nodiscard]] BOOST_CRYPT_GPU_ENABLED_CONSTEXPR
     auto get_digest(compat::span<compat::byte, Extent> data) const noexcept -> state;
 
