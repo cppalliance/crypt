@@ -4,7 +4,9 @@
 
 #include <boost/crypt2/drbg/sha1_drbg.hpp>
 #include <boost/core/lightweight_test.hpp>
+#include <cstddef>
 #include <iostream>
+#include <span>
 #include <string>
 #include <cstring>
 
@@ -209,6 +211,65 @@ void error_states()
     BOOST_TEST(rng.reseed(bad_return) == boost::crypt::state::insufficient_entropy);
 }
 
+template <typename HMACDRBGType>
+consteval bool immediate_test()
+{
+    boost::crypt::sha1_hmac_drbg rng;
+    constexpr std::array<std::byte, 16> entropy = {
+        std::byte{0x49}, std::byte{0x05}, std::byte{0x8e}, std::byte{0x67}, std::byte{0x73}, std::byte{0xed}, std::byte{0x2b}, std::byte{0x7a},
+        std::byte{0xb3}, std::byte{0x09}, std::byte{0xc0}, std::byte{0x94}, std::byte{0x9f}, std::byte{0xdf}, std::byte{0x9c}, std::byte{0x9e}
+    };
+    constexpr std::array<std::byte, 8> nonce = {
+        std::byte{0xa4}, std::byte{0x57}, std::byte{0xcb}, std::byte{0x8e}, std::byte{0xc0}, std::byte{0xe7}, std::byte{0xfd}, std::byte{0x01}
+    };
+    constexpr std::array<std::byte, 16> personalization = {
+            std::byte{0xdc}, std::byte{0x47}, std::byte{0x76}, std::byte{0x41}, std::byte{0xd8}, std::byte{0x9c}, std::byte{0x7f}, std::byte{0xc4}, std::byte{0xa3}, std::byte{0x0f}, std::byte{0x14}, std::byte{0x30}, std::byte{0x19}, std::byte{0x7d}, std::byte{0xd1}, std::byte{0x59}
+    };
+
+    std::span<const std::byte, 16> entropy_span {entropy};
+    std::span<const std::byte, 8> nonce_span {nonce};
+    std::span<const std::byte, 16> personalization_span {personalization};
+
+    rng.init(entropy_span, nonce_span, personalization_span);
+    // ** INSTANTIATE:
+    //	V   = 9c530ef5f1e277aab4e1e129091a273f0342d5c9
+    //	Key = 7006c1c0c03c4ca267b19c50928f35891d8d8807
+
+    std::array<std::byte, 80> return_bits {};
+    std::span<std::byte, 80> return_span {return_bits};
+
+    rng.generate(return_span, 640U);
+    // ** GENERATE (FIRST CALL):
+    //	V   = 5b1508d16daad5aff52273cd549ce6bd9e259b0d
+    //	Key = b7e28116a16856b9e81bda776d421bb56e8f902f
+
+    rng.generate(return_span, return_bits.size() * 8U);
+    // ** GENERATE (SECOND CALL):
+    //	V   = 71fa823bc53bfd307d6438edd7e5c581fffc27cc
+    //	Key = cfccf80b126cea770b468fb8652abbd5eeea2a5e
+
+    constexpr std::array<std::byte, 80> nist_return = {
+            std::byte{0x4e}, std::byte{0x89}, std::byte{0x1f}, std::byte{0x4e}, std::byte{0x28}, std::byte{0x11}, std::byte{0x00}, std::byte{0x45}, std::byte{0x3b}, std::byte{0x70}, std::byte{0x78},
+            std::byte{0x89}, std::byte{0x29}, std::byte{0xec}, std::byte{0x74}, std::byte{0x3a}, std::byte{0x3c}, std::byte{0x5e}, std::byte{0xdd}, std::byte{0x9b}, std::byte{0x81}, std::byte{0xdc},
+            std::byte{0x79}, std::byte{0x8b}, std::byte{0xc9}, std::byte{0x37}, std::byte{0x71}, std::byte{0x36}, std::byte{0x8c}, std::byte{0x39}, std::byte{0xb6}, std::byte{0x12}, std::byte{0x03},
+            std::byte{0x7b}, std::byte{0x6f}, std::byte{0x42}, std::byte{0xf6}, std::byte{0x0c}, std::byte{0x5d}, std::byte{0x89}, std::byte{0x24}, std::byte{0xb6}, std::byte{0x46}, std::byte{0x84},
+            std::byte{0x81}, std::byte{0x51}, std::byte{0xb0}, std::byte{0xc2}, std::byte{0x95}, std::byte{0xbe}, std::byte{0x49}, std::byte{0x1d}, std::byte{0x4a}, std::byte{0x28}, std::byte{0xd1},
+            std::byte{0x92}, std::byte{0x7d}, std::byte{0xee}, std::byte{0xd5}, std::byte{0x23}, std::byte{0xfd}, std::byte{0x04}, std::byte{0xd3}, std::byte{0xd2}, std::byte{0xdd}, std::byte{0xa9},
+            std::byte{0x5e}, std::byte{0xd4}, std::byte{0x21}, std::byte{0x66}, std::byte{0x31}, std::byte{0x2e}, std::byte{0x5c}, std::byte{0x33}, std::byte{0x92}, std::byte{0xd2}, std::byte{0x28},
+            std::byte{0x93}, std::byte{0xb0}, std::byte{0xdc}
+        };
+
+    for (std::size_t i {}; i < return_bits.size(); ++i)
+    {
+        if (!(return_bits[i] == static_cast<std::byte>(nist_return[i])))
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 int main()
 {
     sha1_basic_correctness();
@@ -217,6 +278,8 @@ int main()
 
     error_states<boost::crypt::sha1_hmac_drbg>();
     error_states<boost::crypt::sha1_hmac_drbg_pr>();
+
+    static_assert(immediate_test<boost::crypt::sha1_hmac_drbg>());
 
     return boost::report_errors();
 }
