@@ -135,7 +135,7 @@ BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto hmac_drbg<HMACType, max_hasher_security, 
     const auto provided_data_size {provided_data_1.size() + provided_data_2.size() + provided_data_3.size()};
 
     // Step 1: V || 0x00 || provided data
-    compat::array<compat::byte, 1U> storage_gap {std::byte{0x00}};
+    compat::array<compat::byte, 1U> storage_gap {compat::byte{0x00}};
     compat::span<const compat::byte, 1U> storage_gap_span {storage_gap};
 
     HMACType hmac;

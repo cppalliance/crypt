@@ -6,6 +6,7 @@
 #define BOOST_CRYPT2_DRBG_HASH_DRBG_HPP
 
 #include <boost/crypt2/detail/config.hpp>
+#include <boost/crypt2/detail/assert.hpp>
 #include <boost/crypt2/detail/compat.hpp>
 #include <boost/crypt2/detail/concepts.hpp>
 #include <boost/crypt2/detail/clear_mem.hpp>
@@ -61,7 +62,7 @@ private:
     static constexpr compat::uint64_t reseed_interval {281474976710656ULL}; // 2^48
 
     compat::array<compat::byte, seedlen_bytes> constant_ {};
-    compat::span<const std::byte, seedlen_bytes> constant_span_ {constant_};
+    compat::span<const compat::byte, seedlen_bytes> constant_span_ {constant_};
     compat::array<compat::byte, seedlen_bytes> value_ {};
     compat::span<const compat::byte, seedlen_bytes> value_span_ {value_};
 
@@ -108,7 +109,7 @@ public:
                                                 compat::span<const compat::byte, Extent3> personalization = compat::span<const compat::byte, 0>{}) noexcept -> state;
 
     template <concepts::sized_range SizedRange1,
-              concepts::sized_range SizedRange2,
+              concepts::sized_range SizedRange2 = compat::span<const compat::byte, 0U>,
               concepts::sized_range SizedRange3 = compat::span<const compat::byte, 0U>>
     BOOST_CRYPT_GPU_ENABLED auto init(SizedRange1&& entropy,
                                       SizedRange2&& nonce = compat::span<const compat::byte, 0U> {},

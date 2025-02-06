@@ -24,3 +24,6 @@ run test_shake128_nvcc.cu ;
 run test_shake256_nvcc.cu ;
 
 run test_hmac.cu ;
+
+run test_hmac_drbg.cu ;
+run test_hash_drbg.cu ;
