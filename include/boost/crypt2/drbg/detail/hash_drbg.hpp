@@ -61,7 +61,7 @@ private:
     static constexpr compat::uint64_t reseed_interval {281474976710656ULL}; // 2^48
 
     compat::array<compat::byte, seedlen_bytes> constant_ {};
-    compat::span<const std::byte, seedlen_bytes> constant_span_ {constant_};
+    compat::span<const compat::byte, seedlen_bytes> constant_span_ {constant_};
     compat::array<compat::byte, seedlen_bytes> value_ {};
     compat::span<const compat::byte, seedlen_bytes> value_span_ {value_};
 
