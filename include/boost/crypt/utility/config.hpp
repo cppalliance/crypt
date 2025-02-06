@@ -127,7 +127,7 @@
 // ----- Has something -----
 
 // ----- Unreachable -----
-#if defined(__GNUC__) || defined(__clang__)
+#if defined(__GNUC__) || defined(__clang__) || defined(BOOST_CRYPT_HAS_CUDA)
 #  define BOOST_CRYPT_UNREACHABLE __builtin_unreachable()
 #elif defined(_MSC_VER)
 #  define BOOST_CRYPT_UNREACHABLE __assume(0)
