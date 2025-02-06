@@ -10,6 +10,7 @@
 #include <boost/crypt2/detail/compat.hpp>
 #include <boost/crypt2/detail/concepts.hpp>
 #include <boost/crypt2/detail/clear_mem.hpp>
+#include <boost/crypt2/detail/assert.hpp>
 #include <boost/crypt2/state.hpp>
 
 namespace boost::crypt::aes_detail {
@@ -109,8 +110,9 @@ public:
 
     BOOST_CRYPT_GPU_ENABLED_CONSTEXPR ~cipher() noexcept;
 
-    template <compat::size_t Extent>
-    BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto init(compat::span<const compat::byte, Extent> key) noexcept -> crypt::state;
+    BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto init(compat::span<const compat::byte, 4 * Nk> key) noexcept -> void;
+
+    BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto block_cipher(compat::span<compat::byte, 16U> buffer) noexcept -> void;
 };
 
 template <compat::size_t Nr>
@@ -392,18 +394,52 @@ constexpr auto cipher<Nr>::add_round_key(compat::size_t round) noexcept -> void
 }
 
 template <compat::size_t Nr>
-template <compat::size_t Extent>
-BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto cipher<Nr>::init(compat::span<const compat::byte, Extent> key) noexcept -> crypt::state
+BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto cipher<Nr>::init(compat::span<const compat::byte, 4 * Nk> key) noexcept -> void
 {
-    if (key.size() < Nk)
+    key_expansion(key);
+    initialized = true;
+}
+
+template <compat::size_t Nr>
+BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto cipher<Nr>::block_cipher(compat::span<compat::byte, 16U> buffer) noexcept -> void
+{
+    // Write the buffer to state and then perform operations
+    auto buffer_iter {buffer.begin()};
+    for (auto& row : state)
     {
-        return state::insufficient_key_length;
+        for (auto& element : row)
+        {
+            element = *buffer_iter++;
+        }
     }
 
-    key_expansion(key);
+    compat::size_t round {};
 
-    initialized = true;
-    return state::success;
+    add_round_key(round);
+
+    for (round = 1U; round < Nr; ++round)
+    {
+        sub_bytes();
+        shift_rows();
+        mix_columns();
+        add_round_key(round);
+    }
+
+    BOOST_CRYPT_ASSERT(round == Nr);
+
+    sub_bytes();
+    shift_rows();
+    add_round_key(round);
+
+    // Write the cipher text back
+    buffer_iter = buffer.begin();
+    for (const auto& row : state)
+    {
+        for (const auto& element : row)
+        {
+            *buffer_iter++ = element;
+        }
+    }
 }
 
 } // namespace boost::crypt::aes_detail
