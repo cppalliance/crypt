@@ -45,7 +45,6 @@ https://www.boost.org/LICENSE_1_0.txt
 === Hash-Based Message Authentication Codes (HMAC)
 - <<hmac, `hmac`>>
 
-////
 === Deterministic Random Bit Generators (DRBG)
 ==== Hash-Based
 ===== Non-Prediction Resistant
@@ -100,7 +99,6 @@ https://www.boost.org/LICENSE_1_0.txt
 - <<hmac_drbg, `sha3_256_hmac_drbg_pr`>>
 - <<hmac_drbg, `sha3_384_hmac_drbg_pr`>>
 - <<hmac_drbg, `sha3_512_hmac_drbg_pr`>>
-////
 
 == Enums
 
