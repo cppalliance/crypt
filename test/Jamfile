@@ -123,7 +123,7 @@ run test_nist_cavs_sha512_224_hash_drbg.cpp ;
 run test_nist_cavs_sha512_256_monte.cpp ;
 run test_nist_cavs_sha512_256_short_long.cpp ;
 run test_nist_cavs_sha512_256_hmac.cpp ;
-#run test_nist_cavs_sha512_256_hmac_drbg.cpp ;
+run test_nist_cavs_sha512_256_hmac_drbg.cpp ;
 run test_nist_cavs_sha512_256_hash_drbg.cpp ;
 
 run test_nist_cavs_sha3_512_monte.cpp ;
