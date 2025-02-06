@@ -48,7 +48,7 @@ using sha1_hash_drbg_t = hash_drbg<sha1_hasher, 128U, 160U, prediction_resistanc
 BOOST_CRYPT_EXPORT using sha1_hash_drbg = drbg::sha1_hash_drbg_t<false>;
 BOOST_CRYPT_EXPORT using sha1_hash_drbg_pr = drbg::sha1_hash_drbg_t<true>;
 
-// So on for each hasher available with te correct presets
+// So on for each hasher available with the correct presets
 
 namespace drbg {
 
@@ -66,79 +66,60 @@ namespace drbg {
 // 256: SHA-256, SHA-512/256
 // 384: SHA-384
 // 512: SHA-512
-template <typename HasherType, boost::crypt::size_t max_hasher_security, boost::crypt::size_t outlen, bool prediction_resistance>
+template <typename HasherType, compat:size_t max_hasher_security, compat::size_t outlen, bool prediction_resistance>
 class hash_drbg
 {
 public:
 
-    BOOST_CRYPT_GPU_ENABLED constexpr hash_drbg() noexcept = default;
+public:
 
-    #ifdef BOOST_CRYPT_HAS_CXX20_CONSTEXPR
-    BOOST_CRYPT_GPU_ENABLED constexpr ~hash_drbg() noexcept
-    {
-        destroy();
-    }
-    #endif
+    BOOST_CRYPT_GPU_ENABLED_CONSTEXPR hash_drbg() noexcept = default;
 
-    template <typename ForwardIter1, typename ForwardIter2 = boost::crypt::uint8_t*, typename ForwardIter3 = boost::crypt::uint8_t*>
-    BOOST_CRYPT_GPU_ENABLED constexpr auto init(ForwardIter1 entropy, boost::crypt::size_t entropy_size, ForwardIter2 nonce = nullptr, boost::crypt::size_t nonce_size = 0U, ForwardIter3 personalization = nullptr, boost::crypt::size_t personalization_size = 0U) noexcept -> state;
+    BOOST_CRYPT_GPU_ENABLED_CONSTEXPR ~hash_drbg() noexcept;
 
-    template <typename Container1>
-    BOOST_CRYPT_GPU_ENABLED constexpr auto init(const Container1& entropy) noexcept -> state;
+    template <compat::size_t Extent1,
+              compat::size_t Extent2 = 0U,
+              compat::size_t Extent3 = 0U>
+    BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto init(
+        compat::span<const compat::byte, Extent1> entropy,
+        compat::span<const compat::byte, Extent2> nonce = compat::span<const compat::byte, 0>{},
+        compat::span<const compat::byte, Extent3> personalization = compat::span<const compat::byte, 0>{}) noexcept -> state;
 
-    template <typename Container1, typename Container2>
-    BOOST_CRYPT_GPU_ENABLED constexpr auto init(const Container1& entropy, const Container2& nonce) noexcept -> state;
+    template <concepts::sized_range SizedRange1,
+              concepts::sized_range SizedRange2,
+              concepts::sized_range SizedRange3 = compat::span<const compat::byte, 0U>>
+    BOOST_CRYPT_GPU_ENABLED auto init(
+        SizedRange1&& entropy,
+        SizedRange2&& nonce = compat::span<const compat::byte, 0U> {},
+        SizedRange3&& personalization = compat::span<const compat::byte, 0U> {}) noexcept -> state;
 
-    template <typename Container1, typename Container2, typename Container3>
-    BOOST_CRYPT_GPU_ENABLED constexpr auto init(const Container1& entropy, const Container2& nonce, const Container3& personalization) noexcept -> state;
+    template <compat::size_t Extent1,
+              compat::size_t Extent2 = 0U>
+    BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto reseed(
+        compat::span<const compat::byte, Extent1> entropy,
+        compat::span<const compat::byte, Extent2> additional_input = compat::span<const compat::byte, 0>{}) noexcept -> state;
 
-    #ifdef BOOST_CRYPT_HAS_STRING_VIEW
-    constexpr auto init(std::string_view entropy) noexcept -> state;
+    template <concepts::sized_range SizedRange1,
+              concepts::sized_range SizedRange2 = compat::span<const compat::byte, 0U>>
+    BOOST_CRYPT_GPU_ENABLED auto reseed(
+        SizedRange1&& entropy,
+        SizedRange2&& additional_input = compat::span<const compat::byte, 0U> {}) noexcept -> state;
 
-    constexpr auto init(std::string_view entropy, std::string_view nonce) noexcept -> state;
+    template <compat::size_t Extent1,
+              compat::size_t Extent2 = 0U,
+              compat::size_t Extent3 = 0U>
+    BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto generate(
+        compat::span<compat::byte, Extent1> return_data, compat::size_t requested_bits,
+        compat::span<const compat::byte, Extent2> additional_data1 = compat::span<const compat::byte, 0U> {},
+        [[maybe_unused]] compat::span<const compat::byte, Extent3> additional_data2 = compat::span<const compat::byte, 0U> {}) noexcept -> state;
 
-    constexpr auto init(std::string_view entropy, std::string_view nonce, std::string_view personalization) noexcept -> state;
-    #endif
-
-    #ifdef BOOST_CRYPT_HAS_SPAN
-    template <typename T, std::size_t extent>
-    constexpr auto init(std::span<T, extent> entropy) noexcept -> state;
-
-    template <typename T, std::size_t extent>
-    constexpr auto init(std::span<T, extent> entropy, std::span<T, extent> nonce) noexcept -> state;
-
-    template <typename T, std::size_t extent>
-    constexpr auto init(std::span<T, extent> entropy, std::span<T, extent> nonce, std::span<T, extent> personalization) noexcept -> state;
-    #endif
-
-    template <typename ForwardIter1, typename ForwardIter2 = boost::crypt::uint8_t*>
-    BOOST_CRYPT_GPU_ENABLED constexpr auto reseed(ForwardIter1 entropy, boost::crypt::size_t entropy_size,
-                                                  ForwardIter2 additional_input = nullptr, boost::crypt::size_t additional_input_size = 0U) noexcept -> state;
-
-    template <typename Container1>
-    BOOST_CRYPT_GPU_ENABLED constexpr auto reseed(const Container1& entropy) noexcept -> state;
-
-    template <typename Container1, typename Container2>
-    BOOST_CRYPT_GPU_ENABLED constexpr auto reseed(const Container1& entropy, const Container2& additional_input) noexcept -> state;
-
-    #ifdef BOOST_CRYPT_HAS_STRING_VIEW
-    constexpr auto reseed(const std::string_view entropy) noexcept -> state;
-
-    constexpr auto reseed(const std::string_view entropy, const std::string_view additional_input) noexcept -> state;
-    #endif  // BOOST_CRYPT_HAS_STRING_VIEW
-
-    #ifdef BOOST_CRYPT_HAS_SPAN
-    template <typename T, std::size_t extent>
-    constexpr auto reseed(std::span<T, extent> entropy) noexcept -> state;
-
-    template <typename T, std::size_t extent>
-    constexpr auto reseed(std::span<T, extent> entropy, std::span<T, extent> additional_input) noexcept -> state;
-    #endif // BOOST_CRYPT_HAS_SPAN
-
-    template <typename ForwardIter1, typename ForwardIter2 = boost::crypt::uint8_t*, typename ForwardIter3 = boost::crypt::uint8_t*>
-    BOOST_CRYPT_GPU_ENABLED constexpr auto generate(ForwardIter1 data, boost::crypt::size_t requested_bits ForwardIter2 additional_data_1 = nullptr, boost::crypt::size_t additional_data_1_size = 0U, ForwardIter3 additional_data_2 = nullptr, boost::crypt::size_t additional_data_2_size = 0U) noexcept -> state;
-
-    BOOST_CRYPT_GPU_ENABLED constexpr auto destroy() noexcept;
+    template <concepts::sized_range SizedRange1,
+              concepts::sized_range SizedRange2 = compat::span<const compat::byte, 0U>,
+              concepts::sized_range SizedRange3 = compat::span<const compat::byte, 0U>>
+    BOOST_CRYPT_GPU_ENABLED auto generate(
+        SizedRange1&& return_data, compat::size_t requested_bits,
+        SizedRange2&& additional_data1 = compat::span<const compat::byte, 0U>{},
+        [[maybe_unused]] SizedRange3&& additional_data2 = compat::span<const compat::byte, 0U>{}) noexcept -> state;
 };
 
 } // namespace drbg
@@ -146,3 +127,5 @@ public:
 } // namespace boost
 
 ----
+
+IMPORTANT: In the generate methods if you are using a prediction resistant DRBG you are required at add additional entropy as `addtional_data1` and optionally add personalization with `additional_data2`. These are both optional with a non-prediction resistant DRBG.
