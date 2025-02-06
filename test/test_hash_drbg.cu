@@ -88,6 +88,7 @@ int main()
             std::span<char> in_span(input_vector1[i], static_cast<std::size_t>(64));
             drbg.init(in_span);
             drbg.generate(out, 640U);
+            results.emplace_back(out);
         }
         double t = w.elapsed();
 
