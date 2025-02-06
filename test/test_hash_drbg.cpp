@@ -455,6 +455,99 @@ void sha1_error_cases()
     BOOST_TEST(pr_rng.generate(bad_return_container, 1, entropy, nonce) == boost::crypt::state::uninitialized);
 }
 
+consteval bool immediate_test()
+{
+    boost::crypt::sha1_hash_drbg rng;
+
+    constexpr std::array<std::byte, 16> entropy = {
+            std::byte{0xc3}, std::byte{0xef}, std::byte{0x82}, std::byte{0xce},
+            std::byte{0x24}, std::byte{0x1f}, std::byte{0x02}, std::byte{0xe4},
+            std::byte{0x29}, std::byte{0x8b}, std::byte{0x11}, std::byte{0x8c},
+            std::byte{0xa4}, std::byte{0xf1}, std::byte{0x62}, std::byte{0x25}
+    };
+
+    constexpr std::array<std::byte, 8> nonce = {
+            std::byte{0x15}, std::byte{0xe3}, std::byte{0x2a}, std::byte{0xbb},
+            std::byte{0xae}, std::byte{0x6b}, std::byte{0x74}, std::byte{0x33}
+    };
+
+    constexpr std::array<std::byte, 16> additional_input_1 = {
+            std::byte{0x2b}, std::byte{0x79}, std::byte{0x00}, std::byte{0x52},
+            std::byte{0xf0}, std::byte{0x9b}, std::byte{0x36}, std::byte{0x4d},
+            std::byte{0x4a}, std::byte{0x82}, std::byte{0x67}, std::byte{0xa0},
+            std::byte{0xa7}, std::byte{0xde}, std::byte{0x63}, std::byte{0xb8}
+    };
+
+    constexpr std::array<std::byte, 16> additional_input_2 = {
+            std::byte{0x2e}, std::byte{0xe0}, std::byte{0x81}, std::byte{0x9a},
+            std::byte{0x67}, std::byte{0x1d}, std::byte{0x07}, std::byte{0xb5},
+            std::byte{0x08}, std::byte{0x5c}, std::byte{0xc4}, std::byte{0x6a},
+            std::byte{0xa0}, std::byte{0xe6}, std::byte{0x1b}, std::byte{0x56}
+    };
+
+    std::span<const std::byte, 16> entropy_span {entropy};
+    std::span<const std::byte, 8> nonce_span {nonce};
+    std::span<const std::byte, 16> additional_input_1_span {additional_input_1};
+    std::span<const std::byte, 16> additional_input_2_span {additional_input_2};
+
+    std::array<std::byte, 80> return_bits {};
+    std::span<std::byte, 80> return_bit_span {return_bits};
+
+    // Test process is:
+    // 1) Instantiate drbg
+    // 2) Generate bits, do not compare
+    // 3) Generate bits, compare
+    // 4) Destroy drbg
+    rng.init(entropy_span, nonce_span);
+    // ** INSTANTIATE:
+    //	V = 062e928dbf6ef8f7b57467a2a956f4754b094b5f5a9515fe0059a35d449b74485eac06f0671eaa6ec313fc52da015f69b18cc670d9e89a
+    //	C = 0fb2fcface8fe5876199565b26d3db365037da40291d67915426959d90c8beba18e3dd1961b48a1ac62b0150cdefa5dc077daf27b4cf3e
+
+    rng.generate(return_bit_span, 640U, additional_input_1_span);
+    // ** GENERATE (FIRST CALL):
+    // 	V = 15e18f888dfede7f170dbdfdd02acfab9b41259f83b27d8f548038fad5643302778fe466a1b0a63b22b39b4c59a4b7f151bec718d08a16
+    //	C = 0fb2fcface8fe5876199565b26d3db365037da40291d67915426959d90c8beba18e3dd1961b48a1ac62b0150cdefa5dc077daf27b4cf3e
+
+    rng.generate(return_bit_span, 640U, additional_input_2_span);
+    // ** GENERATE (SECOND CALL):
+    //	V = 25948c835c8ec40678a71458f6feaae1eb78ffdfaccfe520a8a6ce98662cf1bc9073c28d8664f953ae0352e0b5a7ecc5577d08a0babfc3
+    //	C = 0fb2fcface8fe5876199565b26d3db365037da40291d67915426959d90c8beba18e3dd1961b48a1ac62b0150cdefa5dc077daf27b4cf3e
+
+
+    constexpr std::array<std::byte, 80> nist_return = {
+            std::byte{0x58}, std::byte{0x25}, std::byte{0xfa}, std::byte{0x1d},
+            std::byte{0x1d}, std::byte{0xc3}, std::byte{0x3c}, std::byte{0x64},
+            std::byte{0xcd}, std::byte{0xc8}, std::byte{0x69}, std::byte{0x06},
+            std::byte{0x82}, std::byte{0xef}, std::byte{0xf0}, std::byte{0x60},
+            std::byte{0x39}, std::byte{0xe7}, std::byte{0x95}, std::byte{0x08},
+            std::byte{0xc3}, std::byte{0xaf}, std::byte{0x48}, std::byte{0xe8},
+            std::byte{0x80}, std::byte{0xf8}, std::byte{0x22}, std::byte{0x7d},
+            std::byte{0x5f}, std::byte{0x9a}, std::byte{0xaa}, std::byte{0x14},
+            std::byte{0xb3}, std::byte{0xbc}, std::byte{0x76}, std::byte{0xba},
+            std::byte{0xee}, std::byte{0x47}, std::byte{0x7e}, std::byte{0xbb},
+            std::byte{0xb5}, std::byte{0xc4}, std::byte{0x55}, std::byte{0x47},
+            std::byte{0x13}, std::byte{0x41}, std::byte{0x79}, std::byte{0x22},
+            std::byte{0x32}, std::byte{0x57}, std::byte{0x52}, std::byte{0x5e},
+            std::byte{0x8f}, std::byte{0x3a}, std::byte{0xfe}, std::byte{0xfb},
+            std::byte{0x78}, std::byte{0xb5}, std::byte{0x9d}, std::byte{0xa0},
+            std::byte{0x32}, std::byte{0xf1}, std::byte{0x00}, std::byte{0x6d},
+            std::byte{0x74}, std::byte{0xc9}, std::byte{0x83}, std::byte{0x13},
+            std::byte{0x75}, std::byte{0xa6}, std::byte{0x77}, std::byte{0xea},
+            std::byte{0xb3}, std::byte{0x23}, std::byte{0x9c}, std::byte{0x94},
+            std::byte{0xeb}, std::byte{0xe3}, std::byte{0xf7}, std::byte{0xfa}
+    };
+
+    for (std::size_t i {}; i < return_bits.size(); ++i)
+    {
+        if (!(return_bits[i] == static_cast<std::byte>(nist_return[i])))
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 int main()
 {
     sha_1_basic_correctness();
@@ -464,6 +557,8 @@ int main()
     sha1_additional_gen_input();
     sha1_no_reseed_additional_input();
     sha1_error_cases();
+
+    static_assert(immediate_test());
 
     return boost::report_errors();
 }
