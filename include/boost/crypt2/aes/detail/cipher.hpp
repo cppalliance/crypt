@@ -83,8 +83,7 @@ private:
 
     BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto sub_word(compat::array<compat::byte, 4>& temp) noexcept -> void;
 
-    template <compat::size_t Extent>
-    BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto key_expansion(compat::span<const compat::byte, Extent> key) noexcept -> void;
+    BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto key_expansion(compat::span<const compat::byte, 4 * Nk> key) noexcept -> void;
 
     BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto sub_bytes() noexcept -> void;
 
@@ -155,8 +154,7 @@ BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto cipher<Nr>::sub_word(compat::array<compat
 }
 
 template <compat::size_t Nr>
-template <compat::size_t Extent>
-BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto cipher<Nr>::key_expansion(compat::span<const compat::byte, Extent> key) noexcept -> void
+BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto cipher<Nr>::key_expansion(compat::span<const compat::byte, 4 * Nk> key) noexcept -> void
 {
     compat::array<compat::byte, 4> temp;
 
