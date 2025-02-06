@@ -46,6 +46,11 @@ void basic_block_cipher_test()
     BOOST_TEST(gen.inverse_block_cipher(plaintext_span) == boost::crypt::state::success);
 
     BOOST_TEST(plaintext == original_message);
+
+    // Bad inputs
+    boost::crypt::aes_detail::cipher<10> gen2;
+    BOOST_TEST(gen2.block_cipher(plaintext_span) == boost::crypt::state::uninitialized);
+    BOOST_TEST(gen2.inverse_block_cipher(plaintext_span) == boost::crypt::state::uninitialized);
 }
 
 /*
