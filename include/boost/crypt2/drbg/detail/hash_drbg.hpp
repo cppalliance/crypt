@@ -6,6 +6,7 @@
 #define BOOST_CRYPT2_DRBG_HASH_DRBG_HPP
 
 #include <boost/crypt2/detail/config.hpp>
+#include <boost/crypt2/detail/assert.hpp>
 #include <boost/crypt2/detail/compat.hpp>
 #include <boost/crypt2/detail/concepts.hpp>
 #include <boost/crypt2/detail/clear_mem.hpp>
