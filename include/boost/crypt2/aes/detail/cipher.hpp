@@ -93,6 +93,8 @@ private:
 
     BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto inv_shift_rows() noexcept -> void;
 
+    BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto xtimes(compat::byte b) noexcept -> compat::byte;
+
 public:
 
     BOOST_CRYPT_GPU_ENABLED_CONSTEXPR cipher() noexcept = default;
@@ -269,6 +271,15 @@ BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto cipher<Nr>::inv_shift_rows() noexcept -> 
     state[1][3] = state[2][3];
     state[2][3] = state[3][3];
     state[3][3] = temp;
+}
+
+// The transformation of bytes in which the polynomial representation
+// of the input byte is multiplied by x, modulo m(x), to produce the
+// polynomial representation of the output byte.
+template <compat::size_t Nr>
+BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto cipher<Nr>::xtimes(compat::byte b) noexcept -> compat::byte
+{
+    return static_cast<compat::byte>((b << 1U) ^ static_cast<compat::byte>(static_cast<unsigned>((b >> 7U) & static_cast<compat::byte>(1U)) * 0x1BU));
 }
 
 template <compat::size_t Nr>
