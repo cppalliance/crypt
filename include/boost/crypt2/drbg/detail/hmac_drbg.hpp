@@ -99,9 +99,9 @@ public:
                                                   compat::span<const compat::byte, Extent2> additional_input = compat::span<const compat::byte, 0>{}) noexcept -> state;
 
     template <concepts::sized_range SizedRange1,
-              concepts::sized_range SizedRange2 = compat::array<compat::byte, 0U>>
+              concepts::sized_range SizedRange2 = compat::span<const compat::byte, 0U>>
     BOOST_CRYPT_GPU_ENABLED auto reseed(SizedRange1&& entropy,
-                                        SizedRange2&& additional_data = compat::array<compat::byte, 0>{}) noexcept -> state;
+                                        SizedRange2&& additional_data = compat::span<const compat::byte, 0U>{}) noexcept -> state;
 
     template <compat::size_t Extent1, compat::size_t Extent2, compat::size_t Extent3>
     BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto generate(compat::span<compat::byte, Extent1> return_data, compat::size_t requested_bits,
@@ -176,7 +176,7 @@ BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto hmac_drbg<HMACType, max_hasher_security, 
 
     #ifdef _MSC_VER
     #pragma warning(push)
-    #pragma warning(disable : 4147) // Conditional expression is constant
+    #pragma warning(disable : 4127) // Conditional expression is constant
     #endif
 
     if (provided_data_size != 0U)
