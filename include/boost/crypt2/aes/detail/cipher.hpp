@@ -97,6 +97,8 @@ private:
 
     BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto mix_columns() noexcept -> void;
 
+    BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto inv_mix_columns() noexcept -> void;
+
     BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto gf28_multiply(compat::byte x, compat::byte y) noexcept -> compat::byte;
 
 public:
@@ -322,6 +324,36 @@ BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto cipher<Nr>::mix_columns() noexcept -> voi
         temp = column[3] ^ s0;
         temp = xtimes(temp);
         column[3] ^= temp ^ all_c ;
+    }
+}
+
+template <compat::size_t Nr>
+BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto cipher<Nr>::inv_mix_columns() noexcept -> void
+{
+    for (auto& column : state)
+    {
+        const auto s0 {column[0]};
+        const auto s1 {column[1]};
+        const auto s2 {column[2]};
+        const auto s3 {column[3]};
+
+        constexpr compat::byte b {0x0b};
+        constexpr compat::byte d {0x0d};
+        constexpr compat::byte e {0x0e};
+        constexpr compat::byte nine {0x09};
+
+
+        // s'_0,c = ({0e} * s_0,c) ^ ({0b} * s_1,c) ^ ({0d} * s_2,c) ^ ({09} * s_3,c)
+        column[0] = gf28_multiply(s0, e) ^ gf28_multiply(s1, b) ^ gf28_multiply(s2, d) ^ gf28_multiply(s3, nine);
+
+        // s'_1,c = ({09} * s_0,c) ^ ({0e} * s_1,c) ^ ({0b} * s_2,c) ^ ({0d} * s_3,c)
+        column[1] = gf28_multiply(s0, nine) ^ gf28_multiply(s1, e) ^ gf28_multiply(s2, b) ^ gf28_multiply(s3, d);
+
+        // s`_2,c = ({0d} * s_0,c) ^ ({09} * s_1,c) ^ ({0e} * s_2,c) ^ ({0b} * s_3,c)
+        column[2] = gf28_multiply(s0, d) ^ gf28_multiply(s1, nine) ^ gf28_multiply(s2, e) ^ gf28_multiply(s3, b);
+
+        // s`_3,c = ({0b} * s_0,c) ^ ({0d} * s_1,c) ^ ({09} * s_2,c) ^ ({0e} * s_3,c)
+        column[3] = gf28_multiply(s0, b) ^ gf28_multiply(s1, d) ^ gf28_multiply(s2, nine) ^ gf28_multiply(s3, e);
     }
 }
 
