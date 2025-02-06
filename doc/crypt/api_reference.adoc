@@ -72,7 +72,7 @@ https://www.boost.org/LICENSE_1_0.txt
 - <<hash_drgb, `sha3_256_hash_drbg_pr`>>
 - <<hash_drgb, `sha3_384_hash_drbg_pr`>>
 - <<hash_drgb, `sha3_512_hash_drbg_pr`>>
-////
+
 ==== HMAC-Based
 ===== Non-Prediction Resistant
 - <<hmac_drbg, `sha1_hmac_drbg`>>
@@ -99,7 +99,6 @@ https://www.boost.org/LICENSE_1_0.txt
 - <<hmac_drbg, `sha3_256_hmac_drbg_pr`>>
 - <<hmac_drbg, `sha3_384_hmac_drbg_pr`>>
 - <<hmac_drbg, `sha3_512_hmac_drbg_pr`>>
-////
 
 == Enums
 

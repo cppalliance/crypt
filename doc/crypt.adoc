@@ -52,9 +52,9 @@ include::crypt/shake256.adoc[]
 include::crypt/hmac.adoc[]
 
 include::crypt/hash_drbg.adoc[]
-////
+
 include::crypt/hmac_drbg.adoc[]
-////
+
 include::crypt/concepts.adoc[]
 
 include::crypt/config.adoc[]
