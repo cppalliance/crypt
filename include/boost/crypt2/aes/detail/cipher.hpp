@@ -56,6 +56,143 @@ inline constexpr compat::array<compat::byte, 11> Rcon = {
         compat::byte{0x8d}, compat::byte{0x01}, compat::byte{0x02}, compat::byte{0x04}, compat::byte{0x08}, compat::byte{0x10}, compat::byte{0x20}, compat::byte{0x40}, compat::byte{0x80}, compat::byte{0x1b}, compat::byte{0x36}
 };
 
-} // namespace aes detail
+template <compat::size_t Nr>
+class cipher
+{
+private:
+
+    static constexpr compat::size_t Nb {4}; // Block size
+    static constexpr compat::size_t Nk {Nr == 10 ? 4 :
+                                        Nr == 12 ? 6 :
+                                        Nr == 14 ? 8 : 0}; // Key length in 32-bit words
+
+    static_assert(Nk != 0, "Invalid key length");
+
+    static constexpr compat::size_t key_expansion_size {Nr == 10 ? 176 :
+                                                        Nr == 12 ? 208 :
+                                                        Nr == 14 ? 240 : 0};
+
+    static constexpr compat::size_t state_total_size {Nb * Nb};
+
+    compat::array<compat::array<compat::byte, Nb>, Nb> state {};
+    compat::array<compat::byte, key_expansion_size> round_key {};
+    bool initialized {false};
+
+    BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto rot_word(compat::array<compat::byte, 4>& temp) noexcept -> void;
+
+    BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto sub_word(compat::array<compat::byte, 4>& temp) noexcept -> void;
+
+    template <compat::size_t Extent>
+    BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto key_expansion(compat::span<const compat::byte, Extent> key) noexcept -> void;
+
+public:
+
+    BOOST_CRYPT_GPU_ENABLED_CONSTEXPR cipher() noexcept = default;
+
+    BOOST_CRYPT_GPU_ENABLED_CONSTEXPR ~cipher() noexcept;
+
+    template <compat::size_t Extent>
+    BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto init(compat::span<const compat::byte, Extent> key) noexcept -> crypt::state;
+};
+
+template <compat::size_t Nr>
+BOOST_CRYPT_GPU_ENABLED_CONSTEXPR cipher<Nr>::~cipher() noexcept
+{
+    detail::clear_mem(state[0]);
+    detail::clear_mem(state[1]);
+    detail::clear_mem(state[2]);
+    detail::clear_mem(state[3]);
+    detail::clear_mem(state[4]);
+
+    detail::clear_mem(round_key);
+
+    initialized = false;
+}
+
+// The transformation of words in which the four bytes of the word
+// are permuted cyclically.
+template <compat::size_t Nr>
+BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto cipher<Nr>::rot_word(compat::array<compat::byte, 4>& temp) noexcept -> void
+{
+    const auto temp0 {temp[0]};
+    temp[0] = temp[1];
+    temp[1] = temp[2];
+    temp[2] = temp[3];
+    temp[3] = temp0;
+}
+
+// The transformation of words in which the S-box is applied to each
+// of the four bytes of the word.
+template <compat::size_t Nr>
+BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto cipher<Nr>::sub_word(compat::array<compat::byte, 4>& temp) noexcept -> void
+{
+    temp[0] = sbox[static_cast<compat::size_t>(temp[0])];
+    temp[1] = sbox[static_cast<compat::size_t>(temp[1])];
+    temp[2] = sbox[static_cast<compat::size_t>(temp[2])];
+    temp[3] = sbox[static_cast<compat::size_t>(temp[3])];
+}
+
+template <compat::size_t Nr>
+template <compat::size_t Extent>
+BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto cipher<Nr>::key_expansion(compat::span<const compat::byte, Extent> key) noexcept -> void
+{
+    compat::array<compat::byte, 4> temp;
+
+    for (compat::size_t i {}; i < Nk; ++i)
+    {
+        const auto k {i * 4U};
+        round_key[k + 0U] = key[k + 0U];
+        round_key[k + 1U] = key[k + 1U];
+        round_key[k + 2U] = key[k + 2U];
+        round_key[k + 3U] = key[k + 3U];
+    }
+
+    for (compat::size_t i {Nk}; i < Nb * (Nr + 1); ++i)
+    {
+        const auto k {(i - 1) * 4U};
+        temp[0] = round_key[k + 0U];
+        temp[1] = round_key[k + 1U];
+        temp[2] = round_key[k + 2U];
+        temp[3] = round_key[k + 3U];
+
+        if (i % Nk == 0)
+        {
+            rot_word(temp);
+            sub_word(temp);
+            temp[0] ^= Rcon[i / Nk];
+        }
+
+        if constexpr (Nk > 6U)
+        {
+            if (i % Nk == 4U)
+            {
+                sub_word(temp);
+            }
+        }
+        const auto j {i * 4U};
+        const auto l {(i - Nk) * 4U};
+        round_key[j + 0U] = round_key[l + 0U] ^ temp[0];
+        round_key[j + 1U] = round_key[l + 1U] ^ temp[1];
+        round_key[j + 2U] = round_key[l + 2U] ^ temp[2];
+        round_key[j + 3U] = round_key[l + 3U] ^ temp[3];
+    }
+}
+
+template <compat::size_t Nr>
+template <compat::size_t Extent>
+BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto cipher<Nr>::init(compat::span<const compat::byte, Extent> key) noexcept -> crypt::state
+{
+    if (key.size() < Nk)
+    {
+        return state::insufficient_key_length;
+    }
+
+    key_expansion(key);
+
+    initialized = true;
+    return state::success;
+}
+
+} // namespace boost::crypt::aes_detail
 
 #endif // BOOST_CRYPT2_AES_DETAIL_CIPHER_HPP
