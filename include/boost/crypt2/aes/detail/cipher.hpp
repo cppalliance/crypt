@@ -113,6 +113,8 @@ public:
     BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto init(compat::span<const compat::byte, 4 * Nk> key) noexcept -> void;
 
     BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto block_cipher(compat::span<compat::byte, 16U> buffer) noexcept -> void;
+
+    BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto inverse_block_cipher(compat::span<compat::byte, 16U> buffer) noexcept -> void;
 };
 
 template <compat::size_t Nr>
@@ -412,12 +414,13 @@ BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto cipher<Nr>::block_cipher(compat::span<com
             element = *buffer_iter++;
         }
     }
+    BOOST_CRYPT_ASSERT(buffer_iter == buffer.end());
 
     compat::size_t round {};
 
     add_round_key(round);
 
-    for (round = 1U; round < Nr; ++round)
+    for (++round; round < Nr; ++round)
     {
         sub_bytes();
         shift_rows();
@@ -440,6 +443,50 @@ BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto cipher<Nr>::block_cipher(compat::span<com
             *buffer_iter++ = element;
         }
     }
+    BOOST_CRYPT_ASSERT(buffer_iter == buffer.end());
+}
+
+template <compat::size_t Nr>
+constexpr auto cipher<Nr>::inverse_block_cipher(compat::span<compat::byte, 16U> buffer) noexcept -> void
+{
+    // Write the buffer to state and then perform operations
+    auto buffer_iter {buffer.begin()};
+    for (auto& row : state)
+    {
+        for (auto& element : row)
+        {
+            element = *buffer_iter++;
+        }
+    }
+    BOOST_CRYPT_ASSERT(buffer_iter == buffer.end());
+
+    compat::size_t round {Nr};
+
+    add_round_key(round);
+
+    for (--round; round > 0; --round)
+    {
+        inv_shift_rows();
+        inv_sub_bytes();
+        add_round_key(round);
+        inv_mix_columns();
+    }
+
+    BOOST_CRYPT_ASSERT(round == 0);
+    inv_shift_rows();
+    inv_sub_bytes();
+    add_round_key(round);
+
+    // Write the cipher text back
+    buffer_iter = buffer.begin();
+    for (const auto& row : state)
+    {
+        for (const auto& element : row)
+        {
+            *buffer_iter++ = element;
+        }
+    }
+    BOOST_CRYPT_ASSERT(buffer_iter == buffer.end());
 }
 
 } // namespace boost::crypt::aes_detail
