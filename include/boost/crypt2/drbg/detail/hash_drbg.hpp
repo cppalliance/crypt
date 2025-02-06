@@ -68,11 +68,11 @@ private:
     compat::uint64_t reseed_counter_ {};
     bool initialized_ {};
 
-    template <compat::size_t ExtentReturn = compat::dynamic_extent,
-              compat::size_t Extent1 = compat::dynamic_extent,
-              compat::size_t Extent2 = compat::dynamic_extent,
-              compat::size_t Extent3 = compat::dynamic_extent,
-              compat::size_t Extent4 = compat::dynamic_extent>
+    template <compat::size_t ExtentReturn,
+              compat::size_t Extent1,
+              compat::size_t Extent2 = 0U,
+              compat::size_t Extent3 = 0U,
+              compat::size_t Extent4 = 0U>
     BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto hash_df(compat::uint32_t no_of_bits_to_return,
                                                    compat::span<compat::byte, ExtentReturn> return_container,
                                                    compat::span<const compat::byte, Extent1> provided_data_1,
@@ -80,17 +80,17 @@ private:
                                                    compat::span<const compat::byte, Extent3> provided_data_3 = compat::span<const compat::byte, 0U> {},
                                                    compat::span<const compat::byte, Extent4> provided_data_4 = compat::span<const compat::byte, 0U> {}) noexcept -> state;
 
-    template <compat::size_t Extent = compat::dynamic_extent>
+    template <compat::size_t Extent>
     BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto hashgen(compat::span<compat::byte, Extent> returned_bits, compat::size_t requested_number_of_bytes) noexcept -> state;
 
-    template <compat::size_t Extent1 = compat::dynamic_extent,
-              compat::size_t Extent2 = compat::dynamic_extent>
+    template <compat::size_t Extent1,
+              compat::size_t Extent2 = 0U>
     BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto no_pr_generate_impl(compat::span<compat::byte, Extent1> return_data, compat::size_t requested_bits,
                                                                compat::span<const compat::byte, Extent2> additional_data = compat::span<const compat::byte, 0U> {}) noexcept -> state;
 
-    template <compat::size_t Extent1 = compat::dynamic_extent,
-              compat::size_t Extent2 = compat::dynamic_extent,
-              compat::size_t Extent3 = compat::dynamic_extent>
+    template <compat::size_t Extent1,
+              compat::size_t Extent2,
+              compat::size_t Extent3 = 0U>
     BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto pr_generate_impl(compat::span<compat::byte, Extent1> return_data, compat::size_t requested_bits,
                                                             compat::span<const compat::byte, Extent2> entropy,
                                                             compat::span<const compat::byte, Extent3> additional_data = compat::span<const compat::byte, 0U> {}) noexcept -> state;
@@ -100,43 +100,43 @@ public:
 
     BOOST_CRYPT_GPU_ENABLED_CONSTEXPR ~hash_drbg() noexcept;
 
-    template <compat::size_t Extent1 = compat::dynamic_extent,
-              compat::size_t Extent2 = compat::dynamic_extent,
-              compat::size_t Extent3 = compat::dynamic_extent>
+    template <compat::size_t Extent1,
+              compat::size_t Extent2 = 0U,
+              compat::size_t Extent3 = 0U>
     BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto init(compat::span<const compat::byte, Extent1> entropy,
-                                                compat::span<const compat::byte, Extent2> nonce = compat::span<compat::byte, 0>{},
-                                                compat::span<const compat::byte, Extent3> personalization = compat::span<compat::byte, 0>{}) noexcept -> state;
+                                                compat::span<const compat::byte, Extent2> nonce = compat::span<const compat::byte, 0>{},
+                                                compat::span<const compat::byte, Extent3> personalization = compat::span<const compat::byte, 0>{}) noexcept -> state;
 
     template <concepts::sized_range SizedRange1,
               concepts::sized_range SizedRange2,
-              concepts::sized_range SizedRange3 = compat::array<compat::byte, 0U>>
+              concepts::sized_range SizedRange3 = compat::span<const compat::byte, 0U>>
     BOOST_CRYPT_GPU_ENABLED auto init(SizedRange1&& entropy,
-                                      SizedRange2&& nonce = compat::array<compat::byte, 0U> {},
-                                      SizedRange3&& personalization = compat::array<compat::byte, 0U> {}) noexcept -> state;
-
-    template <compat::size_t Extent1 = compat::dynamic_extent,
-              compat::size_t Extent2 = compat::dynamic_extent>
-    BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto reseed(compat::span<const compat::byte, Extent1> entropy,
-                                                  compat::span<const compat::byte, Extent2> additional_input = compat::span<compat::byte, 0>{}) noexcept -> state;
-
-    template <concepts::sized_range SizedRange1,
-              concepts::sized_range SizedRange2 = compat::array<compat::byte, 0U>>
-    BOOST_CRYPT_GPU_ENABLED auto reseed(SizedRange1&& entropy,
-                                        SizedRange2&& additional_input = compat::array<compat::byte, 0U> {}) noexcept -> state;
+                                      SizedRange2&& nonce = compat::span<const compat::byte, 0U> {},
+                                      SizedRange3&& personalization = compat::span<const compat::byte, 0U> {}) noexcept -> state;
 
     template <compat::size_t Extent1,
-              compat::size_t Extent2 = compat::dynamic_extent,
-              compat::size_t Extent3 = compat::dynamic_extent>
+              compat::size_t Extent2 = 0U>
+    BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto reseed(compat::span<const compat::byte, Extent1> entropy,
+                                                  compat::span<const compat::byte, Extent2> additional_input = compat::span<const compat::byte, 0>{}) noexcept -> state;
+
+    template <concepts::sized_range SizedRange1,
+              concepts::sized_range SizedRange2 = compat::span<const compat::byte, 0U>>
+    BOOST_CRYPT_GPU_ENABLED auto reseed(SizedRange1&& entropy,
+                                        SizedRange2&& additional_input = compat::span<const compat::byte, 0U> {}) noexcept -> state;
+
+    template <compat::size_t Extent1,
+              compat::size_t Extent2 = 0U,
+              compat::size_t Extent3 = 0U>
     BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto generate(compat::span<compat::byte, Extent1> return_data, compat::size_t requested_bits,
                                                     compat::span<const compat::byte, Extent2> additional_data1 = compat::span<const compat::byte, 0U> {},
                                                     [[maybe_unused]] compat::span<const compat::byte, Extent3> additional_data2 = compat::span<const compat::byte, 0U> {}) noexcept -> state;
 
     template <concepts::sized_range SizedRange1,
-              concepts::sized_range SizedRange2 = compat::array<compat::byte, 0U>,
-              concepts::sized_range SizedRange3 = compat::array<compat::byte, 0U>>
+              concepts::sized_range SizedRange2 = compat::span<const compat::byte, 0U>,
+              concepts::sized_range SizedRange3 = compat::span<const compat::byte, 0U>>
     BOOST_CRYPT_GPU_ENABLED auto generate(SizedRange1&& return_data, compat::size_t requested_bits,
-                                          SizedRange2&& additional_data1 = compat::array<compat::byte, 0U>{},
-                                          [[maybe_unused]] SizedRange3&& additional_data2 = compat::array<compat::byte, 0U>{}) noexcept -> state;
+                                          SizedRange2&& additional_data1 = compat::span<const compat::byte, 0U>{},
+                                          [[maybe_unused]] SizedRange3&& additional_data2 = compat::span<const compat::byte, 0U>{}) noexcept -> state;
 };
 
 template <typename HasherType, compat::size_t max_hasher_security, compat::size_t outlen, bool prediction_resistance>
@@ -241,7 +241,7 @@ hash_drbg<HasherType, max_hasher_security, outlen, prediction_resistance>::hashg
     }
 
     auto data {value_};
-    const auto data_span {compat::span<compat::byte, seedlen_bytes>(data)};
+    const auto data_span {compat::span<const compat::byte, seedlen_bytes>(data)};
     compat::size_t offset {};
     HasherType hasher;
     while (offset < requested_number_of_bytes)
