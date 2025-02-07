@@ -3,6 +3,7 @@
 // https://www.boost.org/LICENSE_1_0.txt
 
 #include <boost/crypt2/aes/detail/cipher.hpp>
+#include <boost/crypt2/aes/ecb.hpp>
 #include <boost/core/lightweight_test.hpp>
 #include <array>
 #include <cstdint>
@@ -51,6 +52,83 @@ void basic_block_cipher_test()
     boost::crypt::aes_detail::cipher<10> gen2;
     BOOST_TEST(gen2.block_cipher(plaintext_span) == boost::crypt::state::uninitialized);
     BOOST_TEST(gen2.inverse_block_cipher(plaintext_span) == boost::crypt::state::uninitialized);
+}
+
+void ecb_test()
+{
+    // AES-128 key from appendix A.1
+
+    constexpr std::array<std::byte, 16> key = {
+            std::byte{0x2b}, std::byte{0x7e}, std::byte{0x15}, std::byte{0x16},
+            std::byte{0x28}, std::byte{0xae}, std::byte{0xd2}, std::byte{0xa6},
+            std::byte{0xab}, std::byte{0xf7}, std::byte{0x15}, std::byte{0x88},
+            std::byte{0x09}, std::byte{0xcf}, std::byte{0x4f}, std::byte{0x3c}
+    };
+    const std::span<const std::byte, 16> key_span {key};
+
+    std::array<std::byte, 16> plaintext = {
+            std::byte{0x32}, std::byte{0x43}, std::byte{0xf6}, std::byte{0xa8},
+            std::byte{0x88}, std::byte{0x5a}, std::byte{0x30}, std::byte{0x8d},
+            std::byte{0x31}, std::byte{0x31}, std::byte{0x98}, std::byte{0xa2},
+            std::byte{0xe0}, std::byte{0x37}, std::byte{0x07}, std::byte{0x34}
+    };
+    std::span<std::byte, 16> plaintext_span {plaintext};
+
+    const auto original_message {plaintext};
+
+    boost::crypt::aes128<boost::crypt::aes_cipher_mode::ecb> gen;
+    BOOST_TEST(gen.init(key_span) == boost::crypt::state::success);
+    BOOST_TEST(gen.encrypt_no_padding(plaintext_span) == boost::crypt::state::success);
+
+
+    constexpr std::array<std::byte, 16> validation_1 = {
+            std::byte{0x39}, std::byte{0x25}, std::byte{0x84}, std::byte{0x1d},
+            std::byte{0x02}, std::byte{0xdc}, std::byte{0x09}, std::byte{0xfb},
+            std::byte{0xdc}, std::byte{0x11}, std::byte{0x85}, std::byte{0x97},
+            std::byte{0x19}, std::byte{0x6a}, std::byte{0x0b}, std::byte{0x32}
+    };
+
+    BOOST_TEST(plaintext == validation_1);
+
+    BOOST_TEST(gen.decrypt_no_padding(plaintext_span) == boost::crypt::state::success);
+
+    BOOST_TEST(plaintext == original_message);
+
+    // Bad inputs
+    boost::crypt::aes128<boost::crypt::aes_cipher_mode::ecb> gen2;
+    BOOST_TEST(gen2.encrypt_no_padding(plaintext_span) == boost::crypt::state::uninitialized);
+    BOOST_TEST(gen2.decrypt_no_padding(plaintext_span) == boost::crypt::state::uninitialized);
+}
+
+/*
+void cbc_test()
+{
+    // GFSbox test
+    constexpr boost::crypt::array<boost::crypt::uint8_t, 16> key = {
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+    };
+
+    constexpr boost::crypt::array<boost::crypt::uint8_t, 16> iv {key};
+
+    constexpr boost::crypt::array<boost::crypt::uint8_t, 16> plaintext_start = {
+            0xf3, 0x44, 0x81, 0xec, 0x3c, 0xc6, 0x27, 0xba,
+            0xcd, 0x5d, 0xc3, 0xfb, 0x08, 0xf2, 0x73, 0xe6
+    };
+
+    auto plaintext {plaintext_start};
+
+    constexpr boost::crypt::array<boost::crypt::uint8_t, 16> ciphertext = {
+        0x03, 0x36, 0x76, 0x3e, 0x96, 0x6d, 0x92, 0x59,
+        0x5a, 0x56, 0x7c, 0xc9, 0xce, 0x53, 0x7f, 0x5e
+    };
+
+    boost::crypt::aes128 gen;
+    BOOST_TEST(gen.init(key, key.size()) == boost::crypt::state::success);
+    BOOST_TEST(gen.encrypt<boost::crypt::aes::cipher_mode::cbc>(plaintext.begin(), plaintext.size(), iv.begin(), iv.size()) == boost::crypt::state::success);
+    BOOST_TEST(plaintext == ciphertext);
+    BOOST_TEST(gen.decrypt<boost::crypt::aes::cipher_mode::cbc>(plaintext.begin(), plaintext.size(), iv.begin(), iv.size()) == boost::crypt::state::success);
+    BOOST_TEST(plaintext == plaintext_start);
 }
 
 /*
@@ -323,6 +401,7 @@ void cfb128_test()
 int main()
 {
     basic_block_cipher_test();
+    ecb_test();
     /*
     cbc_test();
     cbc_mmt_test();
