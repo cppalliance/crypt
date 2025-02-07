@@ -94,6 +94,14 @@ void ecb_test()
 
     BOOST_TEST(plaintext == original_message);
 
+    // Ranges
+    boost::crypt::aes128<boost::crypt::aes_cipher_mode::ecb> gen3;
+    BOOST_TEST(gen3.init(key) == boost::crypt::state::success);
+    BOOST_TEST(gen3.encrypt_no_padding(plaintext) == boost::crypt::state::success);
+    BOOST_TEST(plaintext == validation_1);
+    BOOST_TEST(gen3.decrypt_no_padding(plaintext) == boost::crypt::state::success);
+    BOOST_TEST(plaintext == original_message);
+
     // Bad inputs
     boost::crypt::aes128<boost::crypt::aes_cipher_mode::ecb> gen2;
     BOOST_TEST(gen2.encrypt_no_padding(plaintext_span) == boost::crypt::state::uninitialized);

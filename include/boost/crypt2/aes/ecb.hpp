@@ -168,7 +168,7 @@ BOOST_CRYPT_GPU_ENABLED auto ecb_impl<Nr>::decrypt_no_padding(
         SizedRange&& ciphertext) noexcept -> state
 {
     auto ciphertext_span {compat::make_span(ciphertext)};
-    return encrypt_no_padding(compat::as_writable_bytes(ciphertext_span));
+    return decrypt_no_padding(compat::as_writable_bytes(ciphertext_span));
 }
 
 } // namespace aes_detail
