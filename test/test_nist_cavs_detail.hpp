@@ -2551,8 +2551,7 @@ auto test_vectors_aes_mmt(const nist::cavs::test_vector_container_aes& test_vect
     }
 }
 
-/*
-template <boost::crypt::aes::cipher_mode mode, typename AESType>
+template <boost::crypt::aes_cipher_mode mode, typename AESType>
 auto test_vectors_aes_mct(const nist::cavs::test_vector_container_aes& test_vectors) -> bool
 {
     BOOST_TEST(!test_vectors.empty());
@@ -2568,6 +2567,7 @@ auto test_vectors_aes_mct(const nist::cavs::test_vector_container_aes& test_vect
         auto iv {test_vector.iv};
         auto key {test_vector.key};
 
+        /*
         BOOST_CRYPT_IF_CONSTEXPR (mode == boost::crypt::aes::cipher_mode::cfb8 || mode == boost::crypt::aes::cipher_mode::cfb128)
         {
             if (plaintext.empty() || ciphertext.empty() || iv.empty() || key.empty())
@@ -2581,19 +2581,20 @@ auto test_vectors_aes_mct(const nist::cavs::test_vector_container_aes& test_vect
             iv.pop_back();
             key.pop_back();
         }
+         */
 
         AESType aes;
 
-        aes.init(key.begin(), key.size());
+        aes.init(key);
 
         if (count < total_tests / 2U)
         {
             // Encrypt Path
-            BOOST_CRYPT_IF_CONSTEXPR (mode == boost::crypt::aes::cipher_mode::ecb)
+            if constexpr (mode == boost::crypt::aes_cipher_mode::ecb)
             {
                 for (int i {0}; i < 1000; ++i)
                 {
-                    aes.template encrypt<mode>(plaintext.begin(), plaintext.size());
+                    aes.encrypt_no_padding(plaintext);
                 }
             }
             else
@@ -2606,13 +2607,13 @@ auto test_vectors_aes_mct(const nist::cavs::test_vector_container_aes& test_vect
                 {
                     if (i == 0)
                     {
-                        aes.template encrypt<mode>(PT[0].begin(), PT[0].size(), iv.begin(), iv.size());
+                        aes.encrypt_no_padding(PT[0], iv);
                         CT[0] = PT[0];
                         PT[1] = iv;
                     }
                     else
                     {
-                        aes.template encrypt<mode>(PT[i].begin(), PT[i].size());
+                        aes.encrypt_no_padding(PT[i]);
                         CT[i] = PT[i];
                         if (i < 999)
                         {
@@ -2628,11 +2629,11 @@ auto test_vectors_aes_mct(const nist::cavs::test_vector_container_aes& test_vect
         else
         {
             // Decrypt Path
-            BOOST_CRYPT_IF_CONSTEXPR (mode == boost::crypt::aes::cipher_mode::ecb)
+            if constexpr (mode == boost::crypt::aes_cipher_mode::ecb)
             {
                 for (int i {0}; i < 1000; ++i)
                 {
-                    aes.template decrypt<mode>(ciphertext.begin(), ciphertext.size());
+                    aes.decrypt_no_padding(ciphertext);
                 }
             }
             else
@@ -2645,13 +2646,13 @@ auto test_vectors_aes_mct(const nist::cavs::test_vector_container_aes& test_vect
                 {
                     if (i == 0)
                     {
-                        aes.template decrypt<mode>(PT[0].begin(), PT[0].size(), iv.begin(), iv.size());
+                        aes.decrypt_no_padding(PT[0], iv);
                         CT[0] = PT[0];
                         PT[1] = iv;
                     }
                     else
                     {
-                        aes.template decrypt<mode>(PT[i].begin(), PT[i].size());
+                        aes.decrypt_no_padding(PT[i]);
                         CT[i] = PT[i];
                         if (i < 999)
                         {
@@ -2678,7 +2679,6 @@ auto test_vectors_aes_mct(const nist::cavs::test_vector_container_aes& test_vect
 
     return result_is_ok;
 }
-*/
 
 #ifdef _MSC_VER
 #  pragma warning( pop )
