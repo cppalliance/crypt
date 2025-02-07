@@ -1,0 +1,85 @@
+// Copyright 2025 Matt Borland
+// Distributed under the Boost Software License, Version 1.0.
+// https://www.boost.org/LICENSE_1_0.txt
+
+#ifndef BOOST_CRYPT2_AES_ECB_HPP
+#define BOOST_CRYPT2_AES_ECB_HPP
+
+#include <boost/crypt2/aes/cipher_mode.hpp>
+#include <boost/crypt2/aes/detail/cipher.hpp>
+#include <boost/crypt2/detail/config.hpp>
+#include <boost/crypt2/detail/compat.hpp>
+#include <boost/crypt2/detail/concepts.hpp>
+#include <boost/crypt2/detail/clear_mem.hpp>
+#include <boost/crypt2/detail/assert.hpp>
+#include <boost/crypt2/state.hpp>
+
+namespace boost::crypt::aes_detail {
+
+template <compat::size_t Nr>
+class ecb_impl
+{
+private:
+
+    static constexpr compat::size_t key_length_bytes {Nr == 10 ? 16 :
+                                                      Nr == 12 ? 24 :
+                                                      Nr == 14 ? 32 : 0};
+
+    static_assert(key_length_bytes != 0, "Invalid key length");
+
+    cipher<Nr> block_cipher;
+
+public:
+
+    BOOST_CRYPT_GPU_ENABLED_CONSTEXPR ecb_impl() noexcept = default;
+
+    BOOST_CRYPT_GPU_ENABLED_CONSTEXPR ~ecb_impl() noexcept = default;
+
+    template <compat::size_t Extent>
+    BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto init(compat::span<const compat::byte, Extent> key) noexcept -> state;
+
+    template <concepts::sized_range SizedRange>
+    BOOST_CRYPT_GPU_ENABLED auto init(SizedRange&& key) noexcept -> state;
+
+    template <compat::size_t Extent>
+    BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto encrypt(compat::span<compat::byte, Extent> message) noexcept -> state;
+};
+
+template <compat::size_t Nr>
+template <compat::size_t Extent>
+BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto ecb_impl<Nr>::init(compat::span<const compat::byte, Extent> key) noexcept -> state
+{
+    if (key.size() < key_length_bytes)
+    {
+        return state::insufficient_key_length;
+    }
+
+    const auto fixed_key {key.template first<key_length_bytes>()};
+    BOOST_CRYPT_ASSERT(fixed_key.size_bytes() == key_length_bytes);
+
+    block_cipher.init(fixed_key);
+
+    return state::success;
+}
+
+template <compat::size_t Nr>
+template <concepts::sized_range SizedRange>
+BOOST_CRYPT_GPU_ENABLED auto ecb_impl<Nr>::init(SizedRange&& key) noexcept -> state
+{
+    const auto key_span {compat::make_span(key)};
+    if (key_span.size_bytes() < key_length_bytes)
+    {
+        return state::insufficient_key_length;
+    }
+
+    const auto byte_key_span {compat::as_bytes(key_span)};
+    const auto fixed_key {byte_key_span.template first<key_length_bytes>()};
+
+    block_cipher.init(fixed_key);
+
+    return state::success;
+}
+
+} // namespace boost::crypt
+
+#endif // BOOST_CRYPT2_AES_ECB_HPP
