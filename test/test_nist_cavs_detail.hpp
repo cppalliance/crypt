@@ -2467,11 +2467,10 @@ auto test_vectors_aes_kat(const nist::cavs::test_vector_container_aes& test_vect
     }
 }
 
-/*
-template <boost::crypt::aes::cipher_mode mode, typename AESType>
+template <boost::crypt::aes_cipher_mode mode, typename AESType>
 auto test_vectors_aes_mmt(const nist::cavs::test_vector_container_aes& test_vectors) -> bool
 {
-    BOOST_CRYPT_IF_CONSTEXPR (mode == boost::crypt::aes::cipher_mode::ctr)
+    if constexpr (mode == boost::crypt::aes_cipher_mode::ctr)
     {
         return detail::test_vectors_aes_ctr<AESType>(test_vectors);
     }
@@ -2490,7 +2489,8 @@ auto test_vectors_aes_mmt(const nist::cavs::test_vector_container_aes& test_vect
             auto iv {test_vector.iv};
             auto key {test_vector.key};
 
-            BOOST_CRYPT_IF_CONSTEXPR (mode == boost::crypt::aes::cipher_mode::cfb8 || mode == boost::crypt::aes::cipher_mode::cfb128)
+            /*
+            if constexpr (mode == boost::crypt::aes::cipher_mode::cfb8 || mode == boost::crypt::aes::cipher_mode::cfb128)
             {
                 if (plaintext.empty() || ciphertext.empty() || iv.empty() || key.empty())
                 {
@@ -2503,20 +2503,37 @@ auto test_vectors_aes_mmt(const nist::cavs::test_vector_container_aes& test_vect
                 iv.pop_back();
                 key.pop_back();
             }
+            */
 
             AESType aes;
 
-            aes.init(key.begin(), key.size());
+            aes.init(key);
 
-            if (count < total_tests / 2U)
+            if constexpr (mode != boost::crypt::aes_cipher_mode::ecb)
             {
-                // Encrypt Path
-                aes.template encrypt<mode>(plaintext.begin(), plaintext.size(), iv.begin(), iv.size());
+                if (count < total_tests / 2U)
+                {
+                    // Encrypt Path
+                    aes.encrypt_no_padding(plaintext, iv);
+                }
+                else
+                {
+                    // Decrypt Path
+                    aes.decrypt_no_padding(ciphertext, iv);
+                }
             }
             else
             {
-                // Decrypt Path
-                aes.template decrypt<mode>(ciphertext.begin(), ciphertext.size(), iv.begin(), iv.size());
+                if (count < total_tests / 2U)
+                {
+                    // Encrypt Path
+                    aes.encrypt_no_padding(plaintext);
+                }
+                else
+                {
+                    // Decrypt Path
+                    aes.decrypt_no_padding(ciphertext);
+                }
             }
 
             if (plaintext != ciphertext)
@@ -2534,6 +2551,7 @@ auto test_vectors_aes_mmt(const nist::cavs::test_vector_container_aes& test_vect
     }
 }
 
+/*
 template <boost::crypt::aes::cipher_mode mode, typename AESType>
 auto test_vectors_aes_mct(const nist::cavs::test_vector_container_aes& test_vectors) -> bool
 {

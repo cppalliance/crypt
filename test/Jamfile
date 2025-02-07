@@ -153,7 +153,7 @@ run test_nist_cavs_shake256_monte.cpp ;
 run test_nist_cavs_shake256_variable_output.cpp ;
 
 run test_nist_cavs_aes128_kat_ecb.cpp ;
-#run test_nist_cavs_aes128_mmt_ecb.cpp ;
+run test_nist_cavs_aes128_mmt_ecb.cpp ;
 #run test_nist_cavs_aes128_mct_ecb.cpp ;
 #run test_nist_cavs_aes128_kat_cbc.cpp ;
 #run test_nist_cavs_aes128_mmt_cbc.cpp ;
