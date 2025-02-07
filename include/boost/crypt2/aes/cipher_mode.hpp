@@ -11,6 +11,7 @@ namespace boost::crypt {
 
 enum class aes_cipher_mode {
     ecb,        // Electronic Codebook
+    ctr,        // Counter
 };
 
 template <aes_cipher_mode c>
