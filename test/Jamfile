@@ -83,6 +83,8 @@ run test_hash_drbg.cpp ;
 
 run test_aes.cpp ;
 
+run test_pkcs7.cpp ;
+
 # NIST standard testing
 run test_nist_cavs_sha1_monte.cpp ;
 run test_nist_cavs_sha1_short_long.cpp ;
