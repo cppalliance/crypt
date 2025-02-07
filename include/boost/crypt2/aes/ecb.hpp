@@ -25,6 +25,8 @@ private:
                                                       Nr == 12 ? 24 :
                                                       Nr == 14 ? 32 : 0};
 
+    static constexpr compat::size_t block_length_bytes {16U};
+
     static_assert(key_length_bytes != 0, "Invalid key length");
 
     cipher<Nr> block_cipher;
@@ -42,12 +44,13 @@ public:
     BOOST_CRYPT_GPU_ENABLED auto init(SizedRange&& key) noexcept -> state;
 
     template <compat::size_t Extent>
-    BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto encrypt(compat::span<compat::byte, Extent> message) noexcept -> state;
+    BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto encrypt_no_padding(compat::span<compat::byte, Extent> message) noexcept -> state;
 };
 
 template <compat::size_t Nr>
 template <compat::size_t Extent>
-BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto ecb_impl<Nr>::init(compat::span<const compat::byte, Extent> key) noexcept -> state
+BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto ecb_impl<Nr>::init(
+        compat::span<const compat::byte, Extent> key) noexcept -> state
 {
     if (key.size() < key_length_bytes)
     {
@@ -76,6 +79,29 @@ BOOST_CRYPT_GPU_ENABLED auto ecb_impl<Nr>::init(SizedRange&& key) noexcept -> st
     const auto fixed_key {byte_key_span.template first<key_length_bytes>()};
 
     block_cipher.init(fixed_key);
+
+    return state::success;
+}
+
+template <compat::size_t Nr>
+template <compat::size_t Extent>
+BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto ecb_impl<Nr>::encrypt_no_padding(
+        compat::span<compat::byte, Extent> message) noexcept -> state
+{
+    if (message.size() % block_length_bytes != 0)
+    {
+        return state::incorrect_message_length;
+    }
+
+    auto message_begin {message.begin()};
+    const auto message_end {message.end()};
+    while (message_begin != message_end)
+    {
+        auto new_span {compat::span<compat::byte>(message_begin, block_length_bytes)};
+        auto fixed_span {new_span.first<block_length_bytes>()};
+        block_cipher.block_cipher(fixed_span);
+        message_begin += block_length_bytes;
+    }
 
     return state::success;
 }
