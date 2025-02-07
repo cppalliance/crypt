@@ -131,7 +131,6 @@ void cbc_test()
     BOOST_TEST(plaintext == plaintext_start);
 }
 
-/*
 void cbc_test()
 {
     // GFSbox test

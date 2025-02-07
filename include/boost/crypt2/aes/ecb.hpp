@@ -113,7 +113,7 @@ BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto ecb_impl<Nr>::encrypt_no_padding(
     const auto message_end {message.end()};
     while (message_begin != message_end)
     {
-        auto fixed_span {compat::span<compat::byte, block_length_bytes>(message_begin)};
+        auto fixed_span {compat::span<compat::byte, block_length_bytes>(message_begin, message_begin + block_length_bytes)};
         block_cipher.block_cipher(fixed_span);
         message_begin += block_length_bytes;
     }
@@ -139,7 +139,7 @@ BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto ecb_impl<Nr>::decrypt_no_padding(
     const auto ciphertext_end {ciphertext.end()};
     while (ciphertext_begin != ciphertext_end)
     {
-        auto fixed_span {compat::span<compat::byte, block_length_bytes>(ciphertext_begin)};
+        auto fixed_span {compat::span<compat::byte, block_length_bytes>(ciphertext_begin, ciphertext_begin + block_length_bytes)};
         block_cipher.inverse_block_cipher(fixed_span);
         ciphertext_begin += block_length_bytes;
     }
