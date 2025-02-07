@@ -45,6 +45,9 @@ public:
 
     template <compat::size_t Extent>
     BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto encrypt_no_padding(compat::span<compat::byte, Extent> message) noexcept -> state;
+
+    template <compat::size_t Extent>
+    BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto decrypt_no_padding(compat::span<compat::byte, Extent> ciphertext) noexcept -> state;
 };
 
 template <compat::size_t Nr>
@@ -97,10 +100,31 @@ BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto ecb_impl<Nr>::encrypt_no_padding(
     const auto message_end {message.end()};
     while (message_begin != message_end)
     {
-        auto new_span {compat::span<compat::byte>(message_begin, block_length_bytes)};
-        auto fixed_span {new_span.first<block_length_bytes>()};
+        auto fixed_span {compat::span<compat::byte, block_length_bytes>(message_begin)};
         block_cipher.block_cipher(fixed_span);
         message_begin += block_length_bytes;
+    }
+
+    return state::success;
+}
+
+template <compat::size_t Nr>
+template <compat::size_t Extent>
+BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto ecb_impl<Nr>::decrypt_no_padding(
+        compat::span<compat::byte, Extent> ciphertext) noexcept -> state
+{
+    if (ciphertext.size() % block_length_bytes != 0)
+    {
+        return state::incorrect_message_length;
+    }
+
+    auto ciphertext_begin {ciphertext.begin()};
+    const auto ciphertext_end {ciphertext.end()};
+    while (ciphertext_begin != ciphertext_end)
+    {
+        auto fixed_span {compat::span<compat::byte, block_length_bytes>(ciphertext_begin)};
+        block_cipher.inverse_block_cipher(fixed_span);
+        ciphertext_begin += block_length_bytes;
     }
 
     return state::success;
