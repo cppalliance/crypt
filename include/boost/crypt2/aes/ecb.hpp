@@ -32,6 +32,8 @@ private:
 
     cipher<Nr> block_cipher;
 
+    bool initialized {false};
+
 public:
 
     BOOST_CRYPT_GPU_ENABLED_CONSTEXPR ecb_impl() noexcept = default;
@@ -68,6 +70,8 @@ BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto ecb_impl<Nr>::init(
 
     block_cipher.init(fixed_key);
 
+    initialized = true;
+
     return state::success;
 }
 
@@ -86,6 +90,8 @@ BOOST_CRYPT_GPU_ENABLED auto ecb_impl<Nr>::init(SizedRange&& key) noexcept -> st
 
     block_cipher.init(fixed_key);
 
+    initialized = true;
+
     return state::success;
 }
 
@@ -97,6 +103,10 @@ BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto ecb_impl<Nr>::encrypt_no_padding(
     if (message.size() % block_length_bytes != 0)
     {
         return state::incorrect_message_length;
+    }
+    if (!initialized)
+    {
+        return state::uninitialized;
     }
 
     auto message_begin {message.begin()};
@@ -119,6 +129,10 @@ BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto ecb_impl<Nr>::decrypt_no_padding(
     if (ciphertext.size() % block_length_bytes != 0)
     {
         return state::incorrect_message_length;
+    }
+    if (!initialized)
+    {
+        return state::uninitialized;
     }
 
     auto ciphertext_begin {ciphertext.begin()};
