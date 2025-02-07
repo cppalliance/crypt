@@ -123,7 +123,6 @@ BOOST_CRYPT_GPU_ENABLED_CONSTEXPR cipher<Nr>::~cipher() noexcept
     detail::clear_mem(state[1]);
     detail::clear_mem(state[2]);
     detail::clear_mem(state[3]);
-    detail::clear_mem(state[4]);
 
     detail::clear_mem(round_key);
 
