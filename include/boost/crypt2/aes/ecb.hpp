@@ -14,11 +14,12 @@
 #include <boost/crypt2/detail/assert.hpp>
 #include <boost/crypt2/state.hpp>
 
-namespace boost::crypt::aes_detail {
+namespace boost::crypt {
+
+namespace aes_detail {
 
 template <compat::size_t Nr>
-class ecb_impl
-{
+class ecb_impl {
 private:
 
     static constexpr compat::size_t key_length_bytes {Nr == 10 ? 16 :
@@ -44,10 +45,12 @@ public:
     BOOST_CRYPT_GPU_ENABLED auto init(SizedRange&& key) noexcept -> state;
 
     template <compat::size_t Extent>
-    BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto encrypt_no_padding(compat::span<compat::byte, Extent> message) noexcept -> state;
+    BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto
+    encrypt_no_padding(compat::span<compat::byte, Extent> message) noexcept -> state;
 
     template <compat::size_t Extent>
-    BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto decrypt_no_padding(compat::span<compat::byte, Extent> ciphertext) noexcept -> state;
+    BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto
+    decrypt_no_padding(compat::span<compat::byte, Extent> ciphertext) noexcept -> state;
 };
 
 template <compat::size_t Nr>
@@ -129,6 +132,17 @@ BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto ecb_impl<Nr>::decrypt_no_padding(
 
     return state::success;
 }
+
+} // namespace aes_detail
+
+template <>
+class aes128<aes_cipher_mode::ecb> : public aes_detail::ecb_impl<10> {};
+
+template <>
+class aes192<aes_cipher_mode::ecb> : public aes_detail::ecb_impl<12> {};
+
+template <>
+class aes256<aes_cipher_mode::ecb> : public aes_detail::ecb_impl<14> {};
 
 } // namespace boost::crypt
 
