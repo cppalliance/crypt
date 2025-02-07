@@ -50,9 +50,15 @@ public:
     BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto
     encrypt_no_padding(compat::span<compat::byte, Extent> message) noexcept -> state;
 
+    template <concepts::sized_range SizedRange>
+    BOOST_CRYPT_GPU_ENABLED auto encrypt_no_padding(SizedRange&& message) noexcept -> state;
+
     template <compat::size_t Extent>
     BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto
     decrypt_no_padding(compat::span<compat::byte, Extent> ciphertext) noexcept -> state;
+
+    template <concepts::sized_range SizedRange>
+    BOOST_CRYPT_GPU_ENABLED auto decrypt_no_padding(SizedRange&& ciphertext) noexcept -> state;
 };
 
 template <compat::size_t Nr>
@@ -122,6 +128,15 @@ BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto ecb_impl<Nr>::encrypt_no_padding(
 }
 
 template <compat::size_t Nr>
+template <concepts::sized_range SizedRange>
+BOOST_CRYPT_GPU_ENABLED auto ecb_impl<Nr>::encrypt_no_padding(
+        SizedRange&& message) noexcept -> state
+{
+    auto message_span {compat::make_span(message)};
+    return encrypt_no_padding(compat::as_writable_bytes(message_span));
+}
+
+template <compat::size_t Nr>
 template <compat::size_t Extent>
 BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto ecb_impl<Nr>::decrypt_no_padding(
         compat::span<compat::byte, Extent> ciphertext) noexcept -> state
@@ -145,6 +160,15 @@ BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto ecb_impl<Nr>::decrypt_no_padding(
     }
 
     return state::success;
+}
+
+template <compat::size_t Nr>
+template <concepts::sized_range SizedRange>
+BOOST_CRYPT_GPU_ENABLED auto ecb_impl<Nr>::decrypt_no_padding(
+        SizedRange&& ciphertext) noexcept -> state
+{
+    auto ciphertext_span {compat::make_span(ciphertext)};
+    return encrypt_no_padding(compat::as_writable_bytes(ciphertext_span));
 }
 
 } // namespace aes_detail
