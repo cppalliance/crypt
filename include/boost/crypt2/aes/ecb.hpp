@@ -66,6 +66,8 @@ template <compat::size_t Extent>
 BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto ecb_impl<Nr>::init(
         compat::span<const compat::byte, Extent> key) noexcept -> state
 {
+    static_assert(Extent >= key_length_bytes, "Invalid key length");
+
     if (key.size() < key_length_bytes)
     {
         return state::insufficient_key_length;
@@ -106,6 +108,8 @@ template <compat::size_t Extent>
 BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto ecb_impl<Nr>::encrypt_no_padding(
         compat::span<compat::byte, Extent> message) noexcept -> state
 {
+    static_assert(Extent >= block_length_bytes, "Invalid block length");
+
     if (message.size() % block_length_bytes != 0)
     {
         return state::incorrect_message_length;
