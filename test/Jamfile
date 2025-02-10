@@ -83,6 +83,8 @@ run test_hash_drbg.cpp ;
 
 run test_aes.cpp ;
 
+run test_pkcs7.cpp ;
+
 # NIST standard testing
 run test_nist_cavs_sha1_monte.cpp ;
 run test_nist_cavs_sha1_short_long.cpp ;
@@ -150,9 +152,9 @@ run test_nist_cavs_shake256_short_long.cpp ;
 run test_nist_cavs_shake256_monte.cpp ;
 run test_nist_cavs_shake256_variable_output.cpp ;
 
-#run test_nist_cavs_aes128_kat_ecb.cpp ;
-#run test_nist_cavs_aes128_mmt_ecb.cpp ;
-#run test_nist_cavs_aes128_mct_ecb.cpp ;
+run test_nist_cavs_aes128_kat_ecb.cpp ;
+run test_nist_cavs_aes128_mmt_ecb.cpp ;
+run test_nist_cavs_aes128_mct_ecb.cpp ;
 #run test_nist_cavs_aes128_kat_cbc.cpp ;
 #run test_nist_cavs_aes128_mmt_cbc.cpp ;
 #run test_nist_cavs_aes128_mct_cbc.cpp ;

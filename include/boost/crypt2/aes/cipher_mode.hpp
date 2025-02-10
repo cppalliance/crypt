@@ -5,13 +5,24 @@
 #ifndef BOOST_CIPHER_MODE_HPP
 #define BOOST_CIPHER_MODE_HPP
 
-namespace boost::crypt::aes {
+#include <boost/crypt2/detail/compat.hpp>
 
-enum class cipher_mode
-{
+namespace boost::crypt {
+
+enum class aes_cipher_mode {
     ecb,        // Electronic Codebook
+    ctr,        // Counter
 };
 
-} // namespace boost::crypt::aes
+template <aes_cipher_mode c>
+class aes128;
+
+template <aes_cipher_mode c>
+class aes192;
+
+template <aes_cipher_mode c>
+class aes256;
+
+} // namespace boost::crypt
 
 #endif //BOOST_CIPHER_MODE_HPP

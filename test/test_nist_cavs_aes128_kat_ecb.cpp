@@ -3,7 +3,7 @@
 // Distributed under the Boost Software License, Version 1.0.
 // https://www.boost.org/LICENSE_1_0.txt
 
-#include <boost/crypt/aes/aes128.hpp>
+#include <boost/crypt2/aes/ecb.hpp>
 #include "test_nist_cavs_detail.hpp"
 #include <string>
 #include <vector>
@@ -36,9 +36,15 @@ auto main() -> int
             // LCOV_EXCL_STOP
         }
 
-        result_is_ok = (nist::cavs::test_vectors_aes_kat<boost::crypt::aes::cipher_mode::ecb, boost::crypt::aes128>(test_vectors) && result_is_ok);
+        result_is_ok = (nist::cavs::test_vectors_aes_kat<boost::crypt::aes_cipher_mode::ecb, boost::crypt::aes128<boost::crypt::aes_cipher_mode::ecb>>(test_vectors) && result_is_ok);
 
-        BOOST_TEST(result_is_ok);
+        if (!BOOST_TEST(result_is_ok))
+        {
+            // LCOV_EXCL_START
+            std::cerr << "Failure from file: " << file << std::endl;
+            result_is_ok = true;
+            // LCOV_EXCL_STOP
+        }
     }
 
     return boost::report_errors();

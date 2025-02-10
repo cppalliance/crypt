@@ -21,6 +21,7 @@ BOOST_CRYPT_EXPORT enum class state
     requested_too_many_bits,    // 2^19 bits is all that's allowed per request
     insufficient_key_length,    // The key is not of proscribed length
     insufficient_output_length, // The output will not fit in the provided container
+    incorrect_message_length,   // In non-padded AES modes the message must be a multiple of 128 bits
     state_error                 // added more input after get_digest without re-init
 };
 
