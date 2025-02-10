@@ -108,9 +108,9 @@ template <compat::size_t Extent>
 BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto ecb_impl<Nr>::encrypt_no_padding(
         compat::span<compat::byte, Extent> message) noexcept -> state
 {
-    static_assert(Extent >= block_length_bytes, "Invalid block length");
+    static_assert(Extent == compat::dynamic_extent || Extent % block_length_bytes == 0, "Invalid ciphertext length");
 
-    if (message.size() % block_length_bytes != 0)
+    if (message.size() % block_length_bytes != 0 && !message.empty())
     {
         return state::incorrect_message_length;
     }
@@ -145,7 +145,9 @@ template <compat::size_t Extent>
 BOOST_CRYPT_GPU_ENABLED_CONSTEXPR auto ecb_impl<Nr>::decrypt_no_padding(
         compat::span<compat::byte, Extent> ciphertext) noexcept -> state
 {
-    if (ciphertext.size() % block_length_bytes != 0)
+    static_assert(Extent == compat::dynamic_extent || Extent % block_length_bytes == 0, "Invalid ciphertext length");
+
+    if (ciphertext.size() % block_length_bytes != 0 && !ciphertext.empty())
     {
         return state::incorrect_message_length;
     }

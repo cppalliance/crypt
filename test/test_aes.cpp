@@ -116,6 +116,10 @@ void ecb_test()
     BOOST_TEST(gen2.init(key_span) == boost::crypt::state::success);
     BOOST_TEST(gen2.encrypt_no_padding(bad_message) == boost::crypt::state::incorrect_message_length);
     BOOST_TEST(gen2.encrypt_no_padding(bad_message_span) == boost::crypt::state::incorrect_message_length);
+
+    std::array<std::byte, 1000> incorrect_size {};
+    std::span<std::byte, std::dynamic_extent> incorrect_size_span {incorrect_size};
+    BOOST_TEST(gen2.decrypt_no_padding(incorrect_size_span) == boost::crypt::state::incorrect_message_length);
 }
 
 /*
