@@ -103,9 +103,19 @@ void ecb_test()
     BOOST_TEST(plaintext == original_message);
 
     // Bad inputs
+    std::vector<std::byte> bad_key { std::byte{0x2b}, std::byte{0x7e}, std::byte{0x15}, std::byte{0x88} };
+    std::span<const std::byte> bad_key_span {bad_key};
+    BOOST_TEST(gen.init(bad_key_span) == boost::crypt::state::insufficient_key_length);
+    BOOST_TEST(gen.init(bad_key) == boost::crypt::state::insufficient_key_length);
     boost::crypt::aes128<boost::crypt::aes_cipher_mode::ecb> gen2;
     BOOST_TEST(gen2.encrypt_no_padding(plaintext_span) == boost::crypt::state::uninitialized);
     BOOST_TEST(gen2.decrypt_no_padding(plaintext_span) == boost::crypt::state::uninitialized);
+
+    auto bad_message = bad_key;
+    std::span<std::byte> bad_message_span {bad_message};
+    BOOST_TEST(gen2.init(key_span) == boost::crypt::state::success);
+    BOOST_TEST(gen2.encrypt_no_padding(bad_message) == boost::crypt::state::incorrect_message_length);
+    BOOST_TEST(gen2.encrypt_no_padding(bad_message_span) == boost::crypt::state::incorrect_message_length);
 }
 
 /*
